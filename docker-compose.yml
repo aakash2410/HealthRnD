@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Relational & Geospatial Database
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: healthcare_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: healthcare_bkg
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Graph Database
+  neo4j:
+    image: neo4j:5.12.0
+    container_name: healthcare_neo4j
+    environment:
+      NEO4J_AUTH: neo4j/password123
+      # APOC plugin is often useful for graph data science & importing
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_apoc_import_file_enabled: "true"
+      NEO4J_apoc_import_file_use__neo4j__config: "true"
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474" # HTTP UI
+      - "7687:7687" # Bolt protocol
+    volumes:
+      - neo4j_data:/data
+    restart: unless-stopped
+
+  # Message Broker / Celery Backend
+  redis:
+    image: redis:7.2-alpine
+    container_name: healthcare_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # Local S3-Compatible Object Storage
+  minio:
+    image: minio/minio:RELEASE.2023-10-16T04-13-43Z
+    container_name: healthcare_minio
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Web UI Console
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  redis_data:
+  minio_data:
