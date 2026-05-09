@@ -3,8 +3,6 @@ import time
 import requests
 from typing import List, Dict, Any
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from backend.core.logger import get_logger
@@ -15,53 +13,43 @@ logger = get_logger(__name__)
 
 CTG_BASE_URL = "https://clinicaltrials.gov/api/v2/studies"
 
+from selenium.webdriver.chrome.options import Options
+
 def _setup_headless_driver() -> webdriver.Chrome:
     """Configures and returns a headless Chrome webdriver."""
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    # Masking as a regular browser to avoid basic blocks
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
     
-    # Use native Selenium Manager instead of external webdriver_manager
+    # Use native Selenium Manager
     driver = webdriver.Chrome(options=chrome_options)
     return driver
 
 def _execute_selenium_scraper() -> List[Dict[str, Any]]:
-    """Runs Selenium to scrape CTRI HTML."""
-    logger.info("Executing CTRI Selenium scraper.")
-    driver = None
-    try:
-        driver = _setup_headless_driver()
-        
-        # CTRI advanced search page (as an example entry point)
-        url = "https://ctri.nic.in/Clinicaltrials/advsearch.php"
-        driver.get(url)
-        
-        # Adding a slight delay to allow scripts to load if any
-        time.sleep(2)
-        
-        # Scrape the page source
-        page_source = driver.page_source
-        soup = BeautifulSoup(page_source, "html.parser")
-        
-        # TODO: Implement robust form submission to get actual listings
-        # For this skeleton, we are parsing the initial HTML to find standard elements
-        # CTRI tables usually contain "Trial Name" and various IDs
-        
-        # Mocking the parsed text output since CTRI requires active POST requests to view trials
-        scraped_text = soup.get_text()
-        
-        logger.info(f"Successfully scraped CTRI main page. Length: {len(scraped_text)}")
-        
-        # Since hitting the actual database requires filling search forms,
-        # we return a mocked structure containing text that will simulate an NCT cross-reference.
-        return [{"trial_id": "CTRI/2023/123", "raw_text": "Secondary IDs include NCT01234567"}]
-        
-    finally:
-        if driver:
-            driver.quit()
+    """Mocks the CTRI Selenium scraper for local testing."""
+    logger.info("Mocking CTRI Selenium scraper for local testing.")
+    
+    # Returning a mocked structure simulating a rich CTRI HTML scrape with multiple NCT cross-references.
+    return [
+        {
+            "trial_id": "CTRI/2023/04/052134", 
+            "trial_name": "Efficacy of AI-assisted retinopathy screening in rural clinics",
+            "phase": "Phase 3",
+            "principal_investigator": "Dr. Ananya Sharma",
+            "raw_text": "Secondary IDs include NCT04516317 (ClinicalTrials.gov)",
+            "source_url": "https://ctri.nic.in/Clinicaltrials/pmaindet2.php?trialid=52134"
+        },
+        {
+            "trial_id": "CTRI/2024/01/061988", 
+            "trial_name": "Non-invasive CGM vs Fingerprick for Type-2 Diabetes in India",
+            "phase": "Phase 2",
+            "principal_investigator": "Dr. Rakesh Gupta",
+            "raw_text": "Cross-referenced trial: NCT05839201",
+            "source_url": "https://ctri.nic.in/Clinicaltrials/pmaindet2.php?trialid=61988"
+        }
+    ]
 
 @retry_with_backoff(retries=2, backoff_in_seconds=5)
 def scrape_ctri() -> List[Dict[str, Any]]:
