@@ -32,14 +32,18 @@ def run_bern2_ner(text: str) -> List[Dict[str, Any]]:
         logger.info(f"Running Hosted NER on text length: {len(text)}")
         client = InferenceClient(token=HF_API_TOKEN)
         
-        # We use a reliable general/biomedical NER model
-        predictions = client.token_classification(text, model="d4data/biomedical-ner-all")
+        # We use a highly accurate medical NER model that properly classifies diseases
+        predictions = client.token_classification(text, model="blaze999/Medical-NER")
         
         # Parse Hugging Face NER format into our standard format
         entities = []
         for pred in predictions:
             # SDK returns objects with .entity_group, .word, .score
             ent_type = getattr(pred, "entity_group", "") or getattr(pred, "entity", "").replace("B-", "").replace("I-", "")
+            
+            # Capitalize properly (DISEASE_DISORDER -> Disease_disorder)
+            ent_type = ent_type.capitalize()
+            
             word = getattr(pred, "word", "")
             score = getattr(pred, "score", 0.0)
             
