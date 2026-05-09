@@ -6,7 +6,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 from backend.core.logger import get_logger
 from backend.core.utils import retry_with_backoff
@@ -25,8 +24,8 @@ def _setup_headless_driver() -> webdriver.Chrome:
     # Masking as a regular browser to avoid basic blocks
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
     
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    # Use native Selenium Manager instead of external webdriver_manager
+    driver = webdriver.Chrome(options=chrome_options)
     return driver
 
 def _execute_selenium_scraper() -> List[Dict[str, Any]]:
