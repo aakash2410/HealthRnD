@@ -1,0 +1,7 @@
+Technical PRD: Healthcare Innovation Scouting Platform (Version 2.0)
+1. System Architecture Overview
+The platform ingests highly fragmented biomedical, clinical, financial, demographic, and regulatory data, transforming it into a highly normalized Biomedical Knowledge Graph (BKG). Version 2.0 introduces Human-in-the-Loop (HITL) orchestration to translate raw graph intelligence into Foundation-ready strategic deliverables.
+... (full PRD content) ...
+5. Compliance & Data Governance Requirements
+The platform architecture is strictly bound by India's Digital Personal Data Protection (DPDP) Act of 2023.
+... (full PRD content) ...

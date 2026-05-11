@@ -89,40 +89,8 @@ def fetch_pubmed_data(query: str) -> List[Dict[str, Any]]:
 
 def _execute_patent_request() -> List[Dict[str, Any]]:
     """Executes the request to EPO OPS, USPTO, and WIPO APIs."""
-    logger.info("Executing Patent APIs request.")
-    
-    # Note: EPO OPS requires OAuth2.0 authentication. 
-    # For robust architecture, we are building the request skeleton here.
-    # Without valid credentials, this will intentionally fail and retry if implemented fully.
-    
-    epo_auth_url = "https://ops.epo.org/3.2/auth/accesstoken"
-    # To implement:
-    # 1. POST to auth_url with Basic Auth (Consumer Key : Consumer Secret) to get Bearer Token
-    # 2. GET to https://ops.epo.org/3.2/rest-services/published-data/search with Bearer Token
-    
-    # For now, returning mocked structure to prevent crashing without keys.
-    return [
-        {
-            "id": "EP3456781A1", 
-            "title": "Machine Learning Apparatus for Real-time Diabetic Retinopathy Screening", 
-            "status": "Granted",
-            "inventors": ["Dr. Ananya Sharma", "Rajeev Kumar"],
-            "filing_date": "2023-04-12",
-            "citations": 14,
-            "abstract": "An AI-driven diagnostic tool utilizing convolutional neural networks to detect microaneurysms from retinal fundus images.",
-            "source_url": "https://worldwide.espacenet.com/patent/search/family/070470216/publication/EP3456781A1?q=EP3456781A1"
-        },
-        {
-            "id": "US2024012345A1", 
-            "title": "Continuous Glucose Monitoring Wearable with Predictive Hypoglycemia Alerts", 
-            "status": "Pending",
-            "inventors": ["Sarah Jenkins", "Dr. Ananya Sharma"],
-            "filing_date": "2024-01-05",
-            "citations": 2,
-            "abstract": "A non-invasive wearable biosensor that samples interstitial fluid...",
-            "source_url": "https://patents.google.com/patent/US2024012345A1/en"
-        }
-    ]
+    logger.info("Executing Patent APIs request. (Currently disabled as it requires API keys. Returning empty to enforce 0 dummy data).")
+    return []
 
 @retry_with_backoff(retries=2, backoff_in_seconds=2)
 def fetch_patent_data() -> List[Dict[str, Any]]:
@@ -133,4 +101,4 @@ def fetch_patent_data() -> List[Dict[str, Any]]:
         return _execute_patent_request()
     except Exception as e:
         logger.error(f"Failed to fetch patent data: {e}")
-        raise DataIngestionError(f"Patent ingestion failed: {e}") from e
+        return []

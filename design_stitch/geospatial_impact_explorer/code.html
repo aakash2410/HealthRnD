@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Geospatial Intelligence - BioScout AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "tertiary-fixed": "#e1e0ff",
+                        "surface": "#f7f9fb",
+                        "primary-container": "#131b2e",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary-container": "#7c839b",
+                        "primary-fixed-dim": "#bec6e0",
+                        "surface-bright": "#f7f9fb",
+                        "primary": "#000000",
+                        "inverse-surface": "#2d3133",
+                        "on-primary-fixed": "#131b2e",
+                        "on-tertiary-fixed": "#07006c",
+                        "on-tertiary-container": "#7073ff",
+                        "on-secondary-container": "#57657b",
+                        "on-tertiary": "#ffffff",
+                        "inverse-primary": "#bec6e0",
+                        "surface-tint": "#565e74",
+                        "on-secondary-fixed": "#0d1c2f",
+                        "surface-container-low": "#f2f4f6",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#2f2ebe",
+                        "on-background": "#191c1e",
+                        "secondary": "#515f74",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#dae2fd",
+                        "on-surface-variant": "#45464d",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#d8dadc",
+                        "outline": "#76777d",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary-fixed": "#d5e3fd",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#000000",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "secondary-container": "#d5e3fd",
+                        "surface-container": "#eceef0",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-surface": "#191c1e",
+                        "outline-variant": "#c6c6cd",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "surface-container-high": "#e6e8ea",
+                        "tertiary-container": "#07006c",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "background": "#f7f9fb"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    spacing: {
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "max-width": "1440px"
+                    },
+                    fontFamily: {
+                        "headline-md": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "data-mono": ["13px", { lineHeight: "18px", fontWeight: "500" }],
+                        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "title-lg": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        .map-bg {
+            background-color: #e0e3e5;
+            background-image: radial-gradient(#c6c6cd 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .heatmap-overlay {
+            background: linear-gradient(135deg, rgba(213,227,253,0.4) 0%, rgba(186,26,26,0.1) 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen overflow-hidden flex flex-col font-body-md text-body-md">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-primary-container text-primary dark:text-primary-fixed-dim font-body-md text-body-md docked full-width top-0 z-50 border-b border-outline-variant dark:border-on-primary-container flex justify-between items-center px-margin-desktop h-16 w-full">
+<div class="flex items-center gap-4">
+<span class="font-title-lg text-title-lg font-bold text-primary dark:text-primary-fixed">BioScout AI</span>
+<div class="h-6 w-[1px] bg-outline-variant mx-2"></div>
+<div class="relative flex items-center bg-surface-container-low border border-outline-variant rounded px-3 py-1.5 focus-within:border-primary">
+<span class="material-symbols-outlined text-on-surface-variant mr-2" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="bg-transparent border-none outline-none font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant w-64 focus:ring-0" placeholder="Search coordinates, trials..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="hover:bg-surface-container dark:hover:bg-secondary-container/50 transition-colors rounded-full p-2 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_balance</span>
+</button>
+<button class="hover:bg-surface-container dark:hover:bg-secondary-container/50 transition-colors rounded-full p-2 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">database</span>
+</button>
+<button class="hover:bg-surface-container dark:hover:bg-secondary-container/50 transition-colors rounded-full p-2 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+                Execute RAG Query
+            </button>
+<div class="h-8 w-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+<img alt="Chief Investment Officer Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7dfHuH1UYaXPfixVux4STBwc4e2vllT6ROP3gyJ5hEAXZNDPmU3bFwXAZuhiPGHBNFvoeeAL5TKqdjd1wIpU8JL7gYaM08mm8fp0fiVl4JGsHiAmuHdIz4wG1iAE92YqBlDd01-s81Zlew1Jm5LezUUDpPu9wdLlL_nYbTVuU_YLnmetBjYU69zWeCNVL7uy9qzd9Cc0EL_-vItXIC8bUitZKvEmiZMZh-Wj9FjX6vjt9rqCD06HyAd2BaEi0DvVvaqKq-ovp3Kg"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-low dark:bg-primary-container text-primary dark:text-primary-fixed font-label-md text-label-md docked left-0 h-full w-64 border-r border-outline-variant dark:border-on-primary-container flex flex-col gap-unit py-gutter h-screen hidden md:flex z-40">
+<div class="px-4 py-4 border-b border-outline-variant mb-4">
+<div class="flex items-center gap-3 mb-6">
+<div class="h-10 w-10 bg-primary rounded flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">biotech</span>
+</div>
+<div>
+<div class="font-headline-md text-[16px] leading-[24px] font-bold text-primary dark:text-primary-fixed">BioScout AI</div>
+<div class="font-body-md text-[12px] leading-[16px] text-on-surface-variant">Precision Intelligence</div>
+</div>
+</div>
+<button class="w-full bg-surface text-primary border border-outline-variant font-label-md text-label-md px-4 py-2 rounded flex items-center justify-center gap-2 hover:bg-surface-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    New Scouting Project
+                </button>
+</div>
+<div class="flex flex-col gap-1 flex-1 overflow-y-auto">
+<a class="text-on-surface-variant dark:text-on-primary-container px-4 py-2 mx-2 rounded hover:text-primary hover:bg-surface-container-high dark:hover:bg-secondary-container/30 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+                    Intelligence
+                </a>
+<a class="text-on-surface-variant dark:text-on-primary-container px-4 py-2 mx-2 rounded hover:text-primary hover:bg-surface-container-high dark:hover:bg-secondary-container/30 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">psychology</span>
+                    Discovery
+                </a>
+<a class="text-on-surface-variant dark:text-on-primary-container px-4 py-2 mx-2 rounded hover:text-primary hover:bg-surface-container-high dark:hover:bg-secondary-container/30 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">hub</span>
+                    Entities
+                </a>
+<a class="text-on-surface-variant dark:text-on-primary-container px-4 py-2 mx-2 rounded hover:text-primary hover:bg-surface-container-high dark:hover:bg-secondary-container/30 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">rule</span>
+                    Orchestration
+                </a>
+<a class="bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded font-bold px-4 py-2 mx-2 flex items-center gap-3 scale-[0.98] transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+                    Geospatial
+                </a>
+</div>
+<div class="border-t border-outline-variant pt-4 mt-auto">
+<a class="text-on-surface-variant dark:text-on-primary-container px-4 py-2 mx-2 rounded hover:text-primary hover:bg-surface-container-high transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history_edu</span>
+                    Audit Logs
+                </a>
+<a class="text-on-surface-variant dark:text-on-primary-container px-4 py-2 mx-2 rounded hover:text-primary hover:bg-surface-container-high transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+                    System Settings
+                </a>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col lg:flex-row relative bg-surface-container-lowest">
+<!-- Map Area -->
+<div class="flex-1 relative map-bg">
+<!-- Overlay Pattern representing Heatmap/Geospatial data -->
+<div class="absolute inset-0 heatmap-overlay mix-blend-multiply opacity-60"></div>
+<!-- Simulated Map Image (Using placeholder pattern for now, but prompting structure) -->
+<div class="absolute inset-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=2074&amp;q=80')] bg-cover bg-center opacity-30 mix-blend-luminosity" data-alt="A high-contrast, data-dense satellite map visualization focused on India, overlaid with glowing district-level heatmap boundaries ranging from cool clinical blue to intense warning red to signify maternal undernutrition disease burden. The map is rendered in a sterile, modern light-mode interface style, emphasizing absolute trustworthiness and high information density. Connecting nodes and micro-grid textures suggest complex analytical orchestration, while small, sharp clinical icons represent active trial locations scattered across the precise geographical canvas."></div>
+<!-- Floating Controls Top Left -->
+<div class="absolute top-4 left-4 flex flex-col gap-2 z-10">
+<div class="bg-surface border border-outline-variant rounded shadow-sm flex flex-col p-1">
+<button class="p-1 hover:bg-surface-container rounded text-primary">
+<span class="material-symbols-outlined">add</span>
+</button>
+<div class="h-[1px] w-full bg-outline-variant my-1"></div>
+<button class="p-1 hover:bg-surface-container rounded text-primary">
+<span class="material-symbols-outlined">remove</span>
+</button>
+</div>
+<button class="bg-surface border border-outline-variant rounded shadow-sm p-2 hover:bg-surface-container text-primary">
+<span class="material-symbols-outlined">my_location</span>
+</button>
+</div>
+<!-- Floating Legend Bottom Left -->
+<div class="absolute bottom-16 left-4 bg-surface/90 backdrop-blur-md border border-outline-variant rounded shadow-sm p-4 w-64 z-10">
+<h4 class="font-label-md text-label-md text-primary mb-3 uppercase tracking-wider">Maternal Undernutrition Burden</h4>
+<div class="h-2 w-full rounded-full bg-gradient-to-r from-secondary-fixed to-error mb-2"></div>
+<div class="flex justify-between font-data-mono text-[10px] text-on-surface-variant">
+<span>Low (NDAP Baseline)</span>
+<span>High (Flagged)</span>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-3 h-3 rounded-full border-2 border-primary bg-white"></div>
+<span class="font-data-mono text-[11px] text-on-surface">Active CTRI Trial Site</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-error/20 border border-error rounded-sm"></div>
+<span class="font-data-mono text-[11px] text-error font-bold">Research Gap Area</span>
+</div>
+</div>
+</div>
+<!-- Simulated Data Points / Nodes -->
+<div class="absolute top-1/3 left-1/3 w-3 h-3 rounded-full border-2 border-primary bg-white shadow-[0_0_10px_rgba(0,0,0,0.2)] cursor-pointer hover:scale-125 transition-transform z-20"></div>
+<div class="absolute top-1/2 left-1/2 w-3 h-3 rounded-full border-2 border-primary bg-white shadow-[0_0_10px_rgba(0,0,0,0.2)] cursor-pointer hover:scale-125 transition-transform z-20"></div>
+<!-- Active Tooltip -->
+<div class="absolute top-1/3 left-[calc(33.33%+1rem)] bg-surface border border-outline-variant rounded shadow-lg p-3 w-56 z-30">
+<div class="flex justify-between items-start mb-1">
+<span class="font-label-md text-label-md text-primary uppercase">District Node 042</span>
+<span class="material-symbols-outlined text-error text-[16px]">warning</span>
+</div>
+<div class="font-data-mono text-[10px] text-on-surface-variant mb-2">Lat: 21.1458° N, Lon: 79.0882° E</div>
+<div class="bg-error-container text-on-error-container px-2 py-1 rounded-sm font-data-mono text-[11px] mb-2 inline-block">High Burden: 68%</div>
+<div class="flex items-center gap-1 font-body-md text-[12px] text-on-surface">
+<span class="material-symbols-outlined text-[14px]">science</span>
+                        0 Active CTRI Trials
+                    </div>
+</div>
+<!-- Research Gap Polygon -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10">
+<polygon fill="rgba(186,26,26,0.1)" points="500,200 600,250 550,350 450,300" stroke="#ba1a1a" stroke-dasharray="4,4" stroke-width="1"></polygon>
+</svg>
+</div>
+<!-- Orchestration Sidebar (Right) -->
+<aside class="w-full lg:w-[320px] bg-surface border-l border-outline-variant flex flex-col h-full overflow-y-auto z-20">
+<div class="p-4 border-b border-outline-variant bg-surface-container-lowest sticky top-0 z-10">
+<h2 class="font-title-lg text-title-lg text-primary">Geospatial Insights</h2>
+<p class="font-body-md text-[13px] text-on-surface-variant mt-1">NDAP/NFHS-5 vs CTRI Analysis</p>
+</div>
+<div class="p-4 flex flex-col gap-4">
+<!-- Layer Control Module -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded flex flex-col">
+<div class="px-3 py-2 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<span class="font-label-md text-label-md text-primary uppercase">Active Layers</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">layers</span>
+</div>
+<div class="p-3 flex flex-col gap-3">
+<label class="flex items-center justify-between cursor-pointer group">
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded border border-primary flex items-center justify-center bg-primary">
+<span class="material-symbols-outlined text-white text-[12px]">check</span>
+</div>
+<span class="font-data-mono text-[12px] text-on-surface group-hover:text-primary transition-colors">NFHS-5 Burden Heatmap</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100">tune</span>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded border border-primary flex items-center justify-center bg-primary">
+<span class="material-symbols-outlined text-white text-[12px]">check</span>
+</div>
+<span class="font-data-mono text-[12px] text-on-surface group-hover:text-primary transition-colors">CTRI Trial Locations</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100">tune</span>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded border border-outline-variant flex items-center justify-center bg-surface-container-lowest"></div>
+<span class="font-data-mono text-[12px] text-on-surface-variant group-hover:text-primary transition-colors">Healthcare Infrastructure</span>
+</div>
+</label>
+</div>
+</div>
+<!-- AI Insight Module -->
+<div class="bg-surface-container-lowest border border-error/50 rounded flex flex-col relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-error"></div>
+<div class="px-4 py-3 border-b border-outline-variant bg-surface-container-low flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[18px]">policy</span>
+<span class="font-label-md text-label-md text-primary uppercase">Research Gap Detected</span>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<p class="font-body-md text-[13px] text-on-surface leading-relaxed">
+                                High concentration of Maternal Undernutrition (Z-Score &lt; -2.0) in Central Zone clusters, correlating with zero active Phase II/III clinical trials for nutritional interventions in the CTRI database.
+                            </p>
+<div class="mt-2 flex gap-2">
+<button class="flex-1 bg-surface border border-outline-variant text-on-surface font-label-md text-[11px] px-2 py-1.5 rounded hover:bg-surface-container transition-colors text-center">Isolate View</button>
+<button class="flex-1 bg-primary text-on-primary font-label-md text-[11px] px-2 py-1.5 rounded hover:opacity-90 transition-opacity text-center">Export Target List</button>
+</div>
+</div>
+</div>
+<!-- Selected Node Details -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded flex flex-col opacity-50 pointer-events-none">
+<div class="px-3 py-2 border-b border-outline-variant bg-surface-container-low">
+<span class="font-label-md text-label-md text-primary uppercase">Node Inspection</span>
+</div>
+<div class="p-6 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-[32px] text-on-surface-variant mb-2">touch_app</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">Select a location node or cluster on the map to view granular demographics.</span>
+</div>
+</div>
+</div>
+</aside>
+</main>
+</div>
+<!-- Footer -->
+<footer class="bg-primary-container dark:bg-surface-container-highest text-on-primary-container dark:text-on-surface font-data-mono text-data-mono fixed bottom-0 w-full z-40 border-t border-tertiary-container dark:border-outline-variant shadow-lg flex justify-between items-center px-margin-desktop py-2 h-12 w-full">
+<div class="flex items-center gap-4">
+<span class="font-label-md text-label-md uppercase tracking-widest text-secondary-fixed">HITL Authorization Layer v4.2 | Human-in-the-Loop Orchestration Active</span>
+</div>
+<div class="flex items-center gap-6">
+<a class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary dark:hover:bg-surface-container transition-colors px-2 py-1 rounded" href="#">Approve Memo</a>
+<a class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary dark:hover:bg-surface-container transition-colors px-2 py-1 rounded" href="#">Reject with Feedback</a>
+<a class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary dark:hover:bg-surface-container transition-colors px-2 py-1 rounded" href="#">Request Clinical Audit</a>
+<a class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary dark:hover:bg-surface-container transition-colors px-2 py-1 rounded" href="#">View Evidence Graph</a>
+</div>
+</footer>
+</body></html>

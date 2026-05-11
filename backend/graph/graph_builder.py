@@ -40,6 +40,7 @@ def generate_bkg_triplets(data: List[Dict[str, Any]], source_type: str) -> List[
             patent_props = {
                 "title": record.get("title"), 
                 "status": record.get("status"),
+                "abstract": record.get("abstract", ""),
                 "source_url": record.get("source_url", "")
             }
             
@@ -77,20 +78,40 @@ def generate_bkg_triplets(data: List[Dict[str, Any]], source_type: str) -> List[
                 
     elif source_type == "layer5_ddrs":
         for record in data:
-            device_id = record.get("entity_id")
-            manufacturer = record.get("manufacturer")
+            device_id = record.get("nct_id")
+            manufacturer = record.get("sponsor")
             if not device_id or not manufacturer: continue
             
             device_props = {
-                "status": record.get("status"), 
-                "class": record.get("device_class"),
+                "phases": record.get("phases"), 
                 "source_url": record.get("source_url", "")
             }
             
             triplets.append({
                 "subject_label": "Company", "subject_id": manufacturer, "subject_props": {"name": manufacturer},
-                "relation": "HOLDS_LICENSE",
-                "object_label": "RegulatoryLicense", "object_id": device_id, "object_props": device_props
+                "relation": "SPONSORS",
+                "object_label": "ClinicalTrial", "object_id": device_id, "object_props": device_props
+            })
+            
+    elif source_type == "layer6_cofunding":
+        for record in data:
+            grant_id = record.get("grant_id")
+            funder = record.get("funder_name")
+            company = record.get("recipient_company")
+            
+            if not funder or not company: continue
+            
+            grant_props = {
+                "grant_id": grant_id,
+                "grant_name": record.get("program_title"),
+                "grant_amount_usd": record.get("grant_amount_usd"),
+                "date_awarded": record.get("date_awarded")
+            }
+            
+            triplets.append({
+                "subject_label": "Funder", "subject_id": funder, "subject_props": {"name": funder},
+                "relation": "FUNDED",
+                "object_label": "Company", "object_id": company, "object_props": grant_props
             })
 
     return triplets

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BioScout AI - Geospatial Orchestration</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Hide scrollbar for clean dashboard look */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c6c6cd; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #76777d; }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f2f4f6",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed": "#0d1c2f",
+                    "tertiary": "#000000",
+                    "on-tertiary-container": "#7073ff",
+                    "tertiary-fixed": "#e1e0ff",
+                    "on-error": "#ffffff",
+                    "on-background": "#191c1e",
+                    "secondary": "#515f74",
+                    "outline-variant": "#c6c6cd",
+                    "on-tertiary-fixed-variant": "#2f2ebe",
+                    "surface-container": "#eceef0",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-dim": "#d8dadc",
+                    "surface-tint": "#565e74",
+                    "inverse-primary": "#bec6e0",
+                    "primary-fixed-dim": "#bec6e0",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "primary": "#000000",
+                    "outline": "#76777d",
+                    "on-primary-container": "#7c839b",
+                    "surface-variant": "#e0e3e5",
+                    "on-surface-variant": "#45464d",
+                    "on-secondary-fixed-variant": "#3a485c",
+                    "surface": "#f7f9fb",
+                    "primary-fixed": "#dae2fd",
+                    "on-primary-fixed": "#131b2e",
+                    "tertiary-container": "#07006c",
+                    "on-surface": "#191c1e",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-bright": "#f7f9fb",
+                    "error-container": "#ffdad6",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e6e8ea",
+                    "on-tertiary-fixed": "#07006c",
+                    "secondary-container": "#d5e3fd",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "background": "#f7f9fb",
+                    "tertiary-fixed-dim": "#c0c1ff",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "primary-container": "#131b2e",
+                    "secondary-fixed": "#d5e3fd",
+                    "on-secondary-container": "#57657b",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#2d3133",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-desktop": "32px",
+                    "unit": "4px",
+                    "margin-mobile": "16px",
+                    "max-width": "1440px",
+                    "gutter": "16px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                    "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                    "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                    "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                    "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "data-mono": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                    "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                    "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md flex min-h-screen overflow-hidden selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Shared Component: SideNavBar -->
+<aside class="bg-surface-container-low text-primary flex flex-col gap-unit py-gutter h-screen docked left-0 w-64 border-r border-outline-variant fixed z-50 justify-between">
+<div class="px-4 flex flex-col gap-6">
+<!-- Header -->
+<div class="flex items-center gap-3 py-2">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]">biotech</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-primary">BioScout AI</span>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Precision Intelligence</span>
+</div>
+</div>
+<!-- CTA -->
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md rounded-lg py-2.5 px-4 flex items-center justify-center gap-2 hover:bg-secondary transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Scouting Project
+            </button>
+<!-- Main Nav -->
+<nav class="flex flex-col gap-1 mt-4">
+<!-- Inactive Tab -->
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:text-primary hover:bg-surface-container-high transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Intelligence
+                </a>
+<!-- Inactive Tab -->
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:text-primary hover:bg-surface-container-high transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">psychology</span>
+                    Discovery
+                </a>
+<!-- Inactive Tab -->
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:text-primary hover:bg-surface-container-high transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">hub</span>
+                    Entities
+                </a>
+<!-- Inactive Tab -->
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:text-primary hover:bg-surface-container-high transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">rule</span>
+                    Orchestration
+                </a>
+<!-- ACTIVE TAB: Geospatial -->
+<a class="flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold px-4 py-2 scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+                    Geospatial
+                </a>
+</nav>
+</div>
+<!-- Footer Nav -->
+<div class="px-4 flex flex-col gap-1 pb-4">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:text-primary hover:bg-surface-container-high transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+                Audit Logs
+            </a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:text-primary hover:bg-surface-container-high transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                System Settings
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas Wrapper -->
+<div class="ml-64 flex-1 flex flex-col min-h-screen relative">
+<!-- Shared Component: TopAppBar -->
+<header class="bg-surface text-primary flex justify-between items-center px-margin-desktop h-16 w-full docked full-width top-0 z-40 border-b border-outline-variant sticky font-body-md text-body-md flat no shadows">
+<!-- Left Side: Search/Context -->
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-96 flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-full pl-10 pr-4 py-1.5 focus:outline-none focus:border-tertiary-container focus:ring-1 focus:ring-tertiary-container font-body-md text-body-md placeholder:text-on-surface-variant transition-colors" placeholder="Search districts, trials, or health metrics..." type="text"/>
+</div>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-2 text-on-surface-variant bg-surface-container py-1 px-3 rounded-full border border-outline-variant/50">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="font-data-mono text-data-mono">REGION: INDIA_SUB</span>
+</div>
+</div>
+<!-- Right Side: Actions -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="w-10 h-10 rounded-full hover:bg-surface-container flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined">account_balance</span>
+</button>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined">database</span>
+</button>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container flex items-center justify-center transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-error"></span>
+</button>
+</div>
+<button class="bg-tertiary-container text-on-tertiary font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-primary transition-colors flex items-center gap-2 shadow-sm border border-transparent">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+                    Execute RAG Query
+                </button>
+<div class="h-8 w-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden ml-2 cursor-pointer hover:opacity-80 transition-opacity">
+<img alt="Chief Investment Officer Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a mature male executive in a well-lit modern corporate office setting. The individual is wearing a crisp blue dress shirt, no tie, conveying an approachable yet authoritative demeanor. The background is softly blurred featuring glass partitions and slate-gray structural elements, matching a high-end corporate identity. The lighting is balanced and neutral, emphasizing clarity and professionalism typical of an institutional portfolio manager." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8y2uwYooiBRCqUx51CGY7uFmI0MjfhsDTEIoKPHMK4xrxO6PM9jcIS_A70kYKhx5AgZumP4f4MIX7pYaMLjruXgftvoDiW66KpZiUdDNkmTKtuDi_LYNBV9MKjCdpMKh0pGhOtR8hdpaAA0sV1gjEYcj-z0jpu9wjrMi-q_gkdQtvCx25YoLR4tThggwlhprp3CsTyhXXnQ_EaG5bNBOKc0RZQvkEecVsdMGtly5K-6dN9TbAVsw2IzVqNfmozKau-F40EbkG18"/>
+</div>
+</div>
+</header>
+<!-- Main Workspace (Map + Sidebar) -->
+<main class="flex-1 flex gap-gutter p-gutter pb-[80px] bg-background overflow-hidden relative">
+<!-- Left: High-Fidelity Interactive Map Canvas -->
+<div class="flex-1 flex flex-col bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden relative shadow-sm">
+<!-- Map Header Bar -->
+<div class="h-12 border-b border-outline-variant bg-surface px-4 flex items-center justify-between z-10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">layers</span>
+<h2 class="font-title-lg text-title-lg text-primary">Geospatial Projection</h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1 border border-outline-variant rounded text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">download</span> Export
+                        </button>
+<button class="px-3 py-1 border border-outline-variant rounded text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors font-label-md text-label-md flex items-center gap-1 bg-surface-container-high">
+<span class="material-symbols-outlined text-[16px]">fullscreen</span> Expand
+                        </button>
+</div>
+</div>
+<!-- The Map Image / Layer Container -->
+<div class="flex-1 relative bg-surface-dim overflow-hidden group cursor-crosshair">
+<!-- Map Base Image (Placeholder for India Map) -->
+<div class="absolute inset-0 bg-[#eef1f4]">
+<img class="w-full h-full object-cover opacity-80 mix-blend-multiply" data-alt="An abstract, stylized topographical map representation focusing on the geographical contours of the Indian subcontinent. The map uses a minimalist, modern data-visualization aesthetic, characterized by subtle contour lines and a muted slate-gray and off-white color palette. A digital overlay of hexagonal grids faintly covers the landmass, suggesting advanced geospatial intelligence analysis. High-contrast, glowing amber and red thermal clusters appear concentrated in specific central and eastern districts, indicating high data density or 'heat'." data-location="India" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtbBE9s86xdfqVgrxLmFzbkzuMWRi7PeZc9kqzLwInLq9HlFk_V_eTQpGS_NL7y-6Cr_LIhqTaRNdY-HDcIEvYiOgK4Rxm4AzL5_H7va57s4H4uhK_5m1Kcv1TdpYGGwAhTpqu02iZk8ZjDjXzMYJuR9wURp8i69x1BcTGaMZXLwTpwiBQ-KklQMMlJe1SYrJAPp22krhX0Z3xy2TQ8S0YMYf-qmgxfcFxiHyXDsbQ2y3rKb4oI6XqgQHnPDTC-jyZYIfqZDzttYE"/>
+</div>
+<!-- Overlay Grid Texture (Precision Intelligence feel) -->
+<div class="absolute inset-0 bg-[linear-gradient(rgba(198,198,205,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(198,198,205,0.2)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none mix-blend-multiply"></div>
+<!-- Interactive Tooltip (Hover State Simulation) -->
+<div class="absolute top-[35%] left-[45%] bg-surface-container-lowest border border-outline-variant shadow-[0_4px_12px_rgba(15,23,42,0.15)] rounded-lg p-4 w-72 backdrop-blur-md bg-opacity-95 z-20 flex flex-col gap-3 transition-opacity">
+<div class="flex items-center justify-between border-b border-outline-variant pb-2">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[18px]">location_city</span>
+<span class="font-label-md text-label-md uppercase tracking-wider">District: Gadchiroli</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Maternal Undernutrition</span>
+<span class="bg-error-container text-on-error-container font-data-mono text-data-mono px-2 py-0.5 rounded font-bold border border-error/20">72% High</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Active Clinical Trials</span>
+<span class="font-data-mono text-data-mono text-primary">0</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Healthcare Infrastructure</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">Score: 2.4/10</span>
+</div>
+</div>
+<div class="mt-2 pt-2 border-t border-outline-variant/50">
+<button class="w-full text-center text-tertiary-container hover:text-primary font-label-md text-label-md flex justify-center items-center gap-1 transition-colors">
+                                View Deep-Dive Report <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+<!-- Tooltip Pointer -->
+<div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-surface-container-lowest border-b border-r border-outline-variant transform rotate-45"></div>
+</div>
+<!-- Map Overlay Markers (Simulated) -->
+<div class="absolute top-[32%] left-[43%] w-20 h-20 rounded-full bg-error/20 border border-error/50 animate-pulse"></div>
+<div class="absolute top-[34%] left-[44%] w-3 h-3 rounded-full bg-error border-2 border-white shadow-sm z-10"></div>
+</div>
+</div>
+<!-- Right: Layer Orchestration Sidebar -->
+<div class="w-96 flex flex-col gap-4 overflow-y-auto pr-1">
+<!-- Sidebar Header -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-1 shadow-sm">
+<h3 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined">tune</span>
+                        Layer Orchestration
+                    </h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Composite multi-variant geospatial overlay controls. Adjust confidence and visibility.</p>
+</div>
+<!-- Layer Card 2: Disease Prevalence (ACTIVE, placed first for focus) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 shadow-[0_4px_12px_rgba(15,23,42,0.05)] ring-1 ring-tertiary-container/20">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-primary font-title-lg text-title-lg text-[16px]">
+<span class="material-symbols-outlined text-tertiary-container text-[20px]">coronavirus</span>
+                            Disease Prevalence (NFHS-5)
+                        </div>
+<!-- Toggle Switch ON -->
+<div class="w-10 h-5 bg-tertiary-container rounded-full relative cursor-pointer flex items-center px-0.5 shadow-inner">
+<div class="w-4 h-4 bg-white rounded-full absolute right-0.5 shadow-sm transform transition-transform"></div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center text-on-surface-variant font-label-md text-label-md">
+<span>Layer Opacity</span>
+<span class="font-data-mono">85%</span>
+</div>
+<input class="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-tertiary-container" max="100" min="0" type="range" value="85"/>
+</div>
+<div class="bg-surface-container p-3 rounded-lg flex flex-col gap-2 border border-outline-variant/30">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Burden Legend (Undernutrition)</span>
+<div class="flex items-center gap-2">
+<div class="flex-1 h-3 rounded bg-gradient-to-r from-surface-variant via-amber-400 to-error"></div>
+</div>
+<div class="flex justify-between items-center font-data-mono text-[10px] text-on-surface-variant mt-1">
+<span>Low (&lt; 20%)</span>
+<span>High (&gt; 60%)</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-1 pt-3 border-t border-outline-variant border-dashed">
+<span class="font-data-mono text-[11px] text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">database</span> Source: NFHS-5
+                        </span>
+<span class="font-data-mono text-[11px] text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">update</span> Updated: Q4 2023
+                        </span>
+</div>
+</div>
+<!-- Layer Card 1: Clinical Trial Locations (INACTIVE) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 opacity-70 hover:opacity-100 transition-opacity">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-on-surface-variant font-title-lg text-title-lg text-[16px]">
+<span class="material-symbols-outlined text-[20px]">science</span>
+                            Clinical Trial Locations
+                        </div>
+<!-- Toggle Switch OFF -->
+<div class="w-10 h-5 bg-surface-container-high border border-outline-variant rounded-full relative cursor-pointer flex items-center px-0.5">
+<div class="w-4 h-4 bg-outline-variant rounded-full absolute left-0.5 shadow-sm transform transition-transform"></div>
+</div>
+</div>
+<div class="bg-surface flex items-center gap-3 p-2 rounded border border-outline-variant/30 mt-2">
+<div class="w-3 h-3 rounded-full bg-secondary-fixed border border-secondary"></div>
+<span class="font-body-md text-body-md text-on-surface-variant">Active Sites (CTRI/CTG)</span>
+</div>
+<div class="flex items-center justify-between mt-1 pt-3 border-t border-outline-variant border-dashed">
+<span class="font-data-mono text-[11px] text-on-surface-variant">Source: CTRI</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">Updated: Real-time API</span>
+</div>
+</div>
+<!-- Layer Card 3: Healthcare Infrastructure (INACTIVE) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 opacity-70 hover:opacity-100 transition-opacity">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-on-surface-variant font-title-lg text-title-lg text-[16px]">
+<span class="material-symbols-outlined text-[20px]">local_hospital</span>
+                            Healthcare Infrastructure
+                        </div>
+<!-- Toggle Switch OFF -->
+<div class="w-10 h-5 bg-surface-container-high border border-outline-variant rounded-full relative cursor-pointer flex items-center px-0.5">
+<div class="w-4 h-4 bg-outline-variant rounded-full absolute left-0.5 shadow-sm transform transition-transform"></div>
+</div>
+</div>
+<div class="bg-surface flex items-center gap-3 p-2 rounded border border-outline-variant/30 mt-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">add_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Hospitals &amp; Diagnostic Labs</span>
+</div>
+<div class="flex items-center justify-between mt-1 pt-3 border-t border-outline-variant border-dashed">
+<span class="font-data-mono text-[11px] text-on-surface-variant">Source: NDHM Registry</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">Updated: Q1 2024</span>
+</div>
+</div>
+<!-- Layer Card 4: Socio-Economic Vulnerability Index (INACTIVE) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 opacity-70 hover:opacity-100 transition-opacity">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-on-surface-variant font-title-lg text-title-lg text-[16px]">
+<span class="material-symbols-outlined text-[20px]">group_work</span>
+                            Socio-Economic Vulnerability
+                        </div>
+<!-- Toggle Switch OFF -->
+<div class="w-10 h-5 bg-surface-container-high border border-outline-variant rounded-full relative cursor-pointer flex items-center px-0.5">
+<div class="w-4 h-4 bg-outline-variant rounded-full absolute left-0.5 shadow-sm transform transition-transform"></div>
+</div>
+</div>
+<div class="bg-surface flex items-center gap-3 p-2 rounded border border-outline-variant/30 mt-2">
+<div class="flex-1 h-2 rounded bg-gradient-to-r from-surface-variant to-[#7073ff]"></div>
+</div>
+<div class="flex items-center justify-between mt-1 pt-3 border-t border-outline-variant border-dashed">
+<span class="font-data-mono text-[11px] text-on-surface-variant">Source: NITI Aayog / NDAP</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">Updated: Q3 2023</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Shared Component: Footer -->
+<footer class="bg-primary-container text-on-primary-container flex justify-between items-center px-margin-desktop py-2 h-12 w-full fixed bottom-0 z-40 border-t border-tertiary-container shadow-lg left-64 w-[calc(100%-16rem)] font-data-mono text-data-mono">
+<div class="flex items-center gap-3">
+<span class="font-label-md text-label-md uppercase tracking-widest text-secondary-fixed">HITL Authorization Layer v4.2 | Human-in-the-Loop Orchestration Active</span>
+<span class="w-2 h-2 rounded-full bg-secondary-fixed animate-pulse ml-2"></span>
+</div>
+<div class="flex gap-4">
+<button class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary transition-colors px-2 py-1 rounded">Approve Memo</button>
+<button class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary transition-colors px-2 py-1 rounded">Reject with Feedback</button>
+<button class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary transition-colors px-2 py-1 rounded">Request Clinical Audit</button>
+<button class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary transition-colors px-2 py-1 rounded flex items-center gap-1">
+                    View Evidence Graph <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</button>
+</div>
+</footer>
+</div>
+</body></html>

@@ -7,10 +7,7 @@ from backend.core.exceptions import ModelInferenceError
 from backend.core.utils import retry_with_backoff
 
 # Import ingestion functions to simulate Graph retrieval locally
-from backend.ingestion.layer1_pubmed import fetch_patent_data
-from backend.ingestion.layer3_market import fetch_tracxn_data
-from backend.ingestion.layer5_regulatory import fetch_ddrs_api
-from backend.graph.graph_builder import generate_bkg_triplets
+from backend.graph.graph_builder import _get_neo4j_driver
 
 load_dotenv()
 logger = get_logger(__name__)
@@ -22,42 +19,82 @@ def _validate_query(query: str) -> None:
     if not query or not isinstance(query, str):
         raise ValueError("Query must be a non-empty string.")
 
-def _perform_vector_search(query: str) -> str:
+def _perform_vector_search(query: str) -> tuple[str, dict]:
     """
-    Simulates a Vector/Cypher search against Neo4j.
-    Fetches raw triplets, filters by keywords, and converts to a context string.
+    Executes a Live Cypher search against the local Neo4j database.
+    Returns (context_string, graph_data_dict)
     """
-    logger.info(f"Simulating graph vector search for query: {query}")
+    logger.info(f"Executing LIVE Graph Search for query: {query}")
     
-    # 1. Fetch data and generate triplets
-    patents = fetch_patent_data()
-    tracxn = fetch_tracxn_data()
-    ddrs = fetch_ddrs_api()
-    
-    all_triplets = []
-    all_triplets.extend(generate_bkg_triplets(patents, "layer1_patent"))
-    all_triplets.extend(generate_bkg_triplets(tracxn, "layer3_tracxn"))
-    all_triplets.extend(generate_bkg_triplets(ddrs, "layer5_ddrs"))
-    
-    # 2. Simple keyword matching (Simulating Vector Search)
-    keywords = set(query.lower().split())
+    driver = _get_neo4j_driver()
+    if not driver:
+        return "Error: Could not connect to Neo4j Database.", {"nodes": [], "links": []}
+        
+    keywords = [k.lower() for k in query.split() if len(k) > 3]
+    if not keywords:
+        keywords = [query.lower()]
+        
+    mapped_keywords = []
+    for k in keywords:
+        mapped_keywords.append(k)
+        if "innovator" in k: mapped_keywords.append("person")
+        if "grantee" in k or "startup" in k or "compan" in k: mapped_keywords.append("company")
+        if "medtech" in k: mapped_keywords.append("device")
+        if "patent" in k: mapped_keywords.append("patent")
+        
     relevant_context = []
+    graph_data = {"nodes": [], "links": []}
+    node_ids = set()
+    link_set = set()
     
-    for t in all_triplets:
-        subject = str(t.get("subject_id", "")).lower()
-        obj = str(t.get("object_id", "")).lower()
-        
-        # If any word in the query matches the subject or object
-        if any(k in subject for k in keywords) or any(k in obj for k in keywords) or "who" in keywords or "what" in keywords:
-            source_url = t.get("object_props", {}).get("source_url", "No URL")
-            sentence = f"{t['subject_id']} ({t['subject_label']}) {t['relation']} {t['object_id']} ({t['object_label']}). [Source: {source_url}]"
-            if sentence not in relevant_context:
-                relevant_context.append(sentence)
+    try:
+        with driver.session() as session:
+            for keyword in mapped_keywords:
+                cypher_query = (
+                    "MATCH (s)-[r]->(o) "
+                    "WHERE toLower(s.id) CONTAINS $keyword OR toLower(o.id) CONTAINS $keyword "
+                    "OR toLower(labels(s)[0]) CONTAINS $keyword OR toLower(labels(o)[0]) CONTAINS $keyword "
+                    "OR toLower(s.abstract) CONTAINS $keyword OR toLower(o.abstract) CONTAINS $keyword "
+                    "RETURN labels(s)[0] AS sub_label, s.id AS sub_id, type(r) AS relation, "
+                    "labels(o)[0] AS obj_label, o.id AS obj_id, o.source_url AS source_url, o.abstract AS abstract "
+                    "LIMIT 20"
+                )
                 
-    if not relevant_context:
-        return "No relevant context found in the Knowledge Graph."
+                result = session.run(cypher_query, keyword=keyword)
+                
+                for record in result:
+                    source_url = record["source_url"] or "No URL"
+                    abstract_text = f" Description: {record['abstract']}." if record.get('abstract') else ""
+                    sentence = f"{record['sub_id']} ({record['sub_label']}) {record['relation']} {record['obj_id']} ({record['obj_label']}).{abstract_text} [Source: {source_url}]"
+                    if sentence not in relevant_context:
+                        relevant_context.append(sentence)
+                        
+                    # Build Graph Payload
+                    sub_id = record['sub_id']
+                    obj_id = record['obj_id']
+                    
+                    if sub_id not in node_ids:
+                        graph_data["nodes"].append({"id": sub_id, "label": record['sub_label']})
+                        node_ids.add(sub_id)
+                    if obj_id not in node_ids:
+                        graph_data["nodes"].append({"id": obj_id, "label": record['obj_label']})
+                        node_ids.add(obj_id)
+                        
+                    link_key = f"{sub_id}-{record['relation']}-{obj_id}"
+                    if link_key not in link_set:
+                        graph_data["links"].append({"source": sub_id, "target": obj_id, "label": record['relation']})
+                        link_set.add(link_key)
+                        
+        if not relevant_context:
+            return "No relevant context found in the Knowledge Graph.", graph_data
+            
+        return "\n".join(relevant_context[:30]), graph_data
         
-    return "\n".join(relevant_context[:10]) # Limit context to top 10
+    except Exception as e:
+        logger.error(f"Cypher query failed: {e}")
+        return f"Error executing Cypher query: {e}", {"nodes": [], "links": []}
+    finally:
+        driver.close()
 
 @retry_with_backoff(retries=3, backoff_in_seconds=2)
 def _generate_llm_response(context: str, query: str) -> str:
@@ -72,26 +109,32 @@ def _generate_llm_response(context: str, query: str) -> str:
         client = InferenceClient(token=HF_API_TOKEN)
         
         system_prompt = (
-            "You are an AI assistant for a Healthcare Scouting Platform. "
-            "Use the provided Knowledge Graph context to answer the user's query. "
-            "Always include the source URLs in your answer as clickable Markdown links. "
-            "Do not make up information that is not in the context."
+            "You are an elite Investment Analyst Agent for a Healthcare Intelligence Platform. "
+            "Your job is to analyze the raw Graph Context provided and synthesize it into a formal Investment Memo. "
+            "Use Markdown to structure the memo EXACTLY with the following sections: "
+            "## Executive Summary\n"
+            "## The Opportunity (Market & Co-Funding)\n"
+            "## The Science (Patents & Trials)\n"
+            "## The Therapeutic / Device (Regulatory)\n"
+            "## Outstanding Risks\n"
+            "## Go/No-Go Recommendation\n\n"
+            "Base all your analysis strictly on the provided context. If data is missing for a section, clearly state 'Data not available in current Knowledge Graph'. "
+            "Always include source URLs when referencing specific patents, startups, or grants."
         )
         
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Context:\n{context}\n\nQuery: {query}"}
+            {"role": "user", "content": f"Context:\n{context}\n\nDraft an investment memo based on this query: {query}"}
         ]
         
-        # Use a highly capable, fast instruct model supported by the Chat endpoint
         response = client.chat_completion(
             messages=messages, 
             model="Qwen/Qwen2.5-7B-Instruct",
-            max_tokens=500
+            max_tokens=1000
         )
         
         answer = response.choices[0].message.content
-        logger.info("Successfully generated LLM response.")
+        logger.info("Successfully drafted Investment Memo.")
         return answer
         
     except Exception as e:
@@ -106,10 +149,9 @@ def handle_rag_query(query: str) -> Dict[str, Any]:
     _validate_query(query)
     
     try:
-        context = _perform_vector_search(query)
+        context, graph_data = _perform_vector_search(query)
         response = _generate_llm_response(context, query)
-        return {"status": "success", "data": response}
+        return {"status": "success", "data": response, "graph_data": graph_data}
     except Exception as e:
         logger.error(f"RAG query failed: {e}")
-        # Return a graceful HTTP 500 equivalent structure instead of crashing
         return {"status": "error", "message": "An internal error occurred while processing your request."}

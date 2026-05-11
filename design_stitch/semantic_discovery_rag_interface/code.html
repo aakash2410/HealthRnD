@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BioScout AI - Intelligence Interface</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* Custom Tooltip Logic */
+        .citation-group:hover .citation-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "tertiary-fixed": "#e1e0ff",
+                        "surface": "#f7f9fb",
+                        "primary-container": "#131b2e",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary-container": "#7c839b",
+                        "primary-fixed-dim": "#bec6e0",
+                        "surface-bright": "#f7f9fb",
+                        "primary": "#000000",
+                        "inverse-surface": "#2d3133",
+                        "on-primary-fixed": "#131b2e",
+                        "on-tertiary-fixed": "#07006c",
+                        "on-tertiary-container": "#7073ff",
+                        "on-secondary-container": "#57657b",
+                        "on-tertiary": "#ffffff",
+                        "inverse-primary": "#bec6e0",
+                        "surface-tint": "#565e74",
+                        "on-secondary-fixed": "#0d1c2f",
+                        "surface-container-low": "#f2f4f6",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#2f2ebe",
+                        "on-background": "#191c1e",
+                        "secondary": "#515f74",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#dae2fd",
+                        "on-surface-variant": "#45464d",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#d8dadc",
+                        "outline": "#76777d",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary-fixed": "#d5e3fd",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#000000",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "secondary-container": "#d5e3fd",
+                        "surface-container": "#eceef0",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-surface": "#191c1e",
+                        "outline-variant": "#c6c6cd",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "surface-container-high": "#e6e8ea",
+                        "tertiary-container": "#07006c",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "background": "#f7f9fb"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "max-width": "1440px"
+                    },
+                    fontFamily: {
+                        "headline-md": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "data-mono": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden selection:bg-tertiary-fixed selection:text-on-tertiary-fixed">
+<!-- TopAppBar Shared Component -->
+<header class="bg-surface text-primary font-body-md text-body-md fixed top-0 z-50 border-b border-outline-variant flex justify-between items-center px-margin-desktop h-16 w-full">
+<div class="flex items-center gap-6">
+<span class="font-title-lg text-title-lg font-bold text-primary tracking-tight">BioScout AI</span>
+<div class="hidden md:flex items-center bg-surface-container-low border border-outline-variant rounded px-3 py-1.5 focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-outline text-[20px] mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 p-0 text-body-md text-on-surface w-64 placeholder:text-outline-variant" placeholder="Quick find..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded hover:bg-surface-container transition-colors text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+</button>
+<button class="p-2 rounded hover:bg-surface-container transition-colors text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="database">database</span>
+</button>
+<button class="p-2 rounded hover:bg-surface-container transition-colors text-on-surface-variant flex items-center justify-center relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="ml-2 bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded shadow-sm hover:opacity-80 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="auto_awesome">auto_awesome</span>
+                Execute RAG Query
+            </button>
+<div class="ml-4 h-8 w-8 rounded-full bg-surface-container border border-outline-variant overflow-hidden flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary-fixed transition-all">
+<img alt="Chief Investment Officer Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYjNFapKpMaZ8fO6aQd5fymt8ExK_dk-6eVD3V6QfTVTfnJwfBetcfUPaT3UerHxL8NM2k-9LLsXjC9q3iWYM0kCyCHixkhBn13d5qz9pR8_56HPWKvlL38YOwuFidKwqAQ39czFFQ0SNee2MSqYClYMuhqCl5_TLXd2IPCZP_cXSwzaSBfyXF_ppk0dnFGoVV1dbPAuCYSZHyfZZ15C2EpPafm2vMhHAF9m3Mnf6xN9vJKfjOyNoITgnR0vp9UpA573zZctWsY64"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar Shared Component -->
+<nav class="bg-surface-container-low text-primary font-label-md text-label-md fixed left-0 h-full w-64 border-r border-outline-variant flex flex-col gap-unit py-gutter z-40 mt-16 pt-6">
+<div class="px-6 mb-6 flex flex-col gap-1">
+<span class="font-label-md text-label-md uppercase tracking-widest text-outline">Platform Area</span>
+<span class="font-title-lg text-title-lg font-bold text-primary">Intelligence</span>
+<span class="text-on-surface-variant text-xs">Precision Intelligence</span>
+</div>
+<button class="mx-4 mb-6 bg-surface-container border border-outline-variant text-primary font-label-md text-label-md px-4 py-2 rounded flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+            New Scouting Project
+        </button>
+<div class="flex flex-col gap-1 px-2 flex-grow">
+<!-- Active Tab: Intelligence -->
+<a class="bg-secondary-container text-on-secondary-container rounded-lg font-bold px-4 py-2 flex items-center gap-3 scale-95 transition-transform group" href="#">
+<span class="material-symbols-outlined group-hover:animate-pulse" data-icon="dashboard" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Intelligence</span>
+</a>
+<a class="text-on-surface-variant px-4 py-2 hover:bg-surface-container-high hover:text-primary transition-all rounded flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+<span>Discovery</span>
+</a>
+<a class="text-on-surface-variant px-4 py-2 hover:bg-surface-container-high hover:text-primary transition-all rounded flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+<span>Entities</span>
+</a>
+<a class="text-on-surface-variant px-4 py-2 hover:bg-surface-container-high hover:text-primary transition-all rounded flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="rule">rule</span>
+<span>Orchestration</span>
+</a>
+<a class="text-on-surface-variant px-4 py-2 hover:bg-surface-container-high hover:text-primary transition-all rounded flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span>Geospatial</span>
+</a>
+</div>
+<div class="mt-auto flex flex-col gap-1 px-2 pb-24">
+<div class="w-full h-px bg-outline-variant/50 my-2"></div>
+<a class="text-on-surface-variant px-4 py-2 hover:bg-surface-container-high hover:text-primary transition-all rounded flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span>Audit Logs</span>
+</a>
+<a class="text-on-surface-variant px-4 py-2 hover:bg-surface-container-high hover:text-primary transition-all rounded flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>System Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-16 mb-12 p-margin-desktop min-h-screen">
+<!-- Orchestration Header & Search -->
+<div class="w-full max-w-5xl mx-auto mb-10">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">graphic_eq</span>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight">RAG Knowledge Query</h1>
+<span class="ml-auto flex items-center gap-2 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full font-data-mono text-data-mono text-[11px] shadow-sm border border-tertiary-fixed-dim">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container animate-pulse"></span>
+                    Graph Sync: Live
+                </span>
+</div>
+<!-- Prominent Search Box -->
+<div class="relative bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_4px_12px_rgba(15,23,42,0.05)] overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent transition-all">
+<div class="flex items-start p-4">
+<span class="material-symbols-outlined text-outline mt-1 mr-3" data-icon="travel_explore">travel_explore</span>
+<textarea class="w-full bg-transparent border-none focus:ring-0 p-0 font-body-lg text-body-lg text-on-surface placeholder:text-outline resize-none min-h-[60px]" placeholder="Query the knowledge graph... (e.g., 'CRISPR startups in India working on agritech')">CRISPR startups in India working on agritech</textarea>
+</div>
+<div class="bg-surface-container-low border-t border-outline-variant px-4 py-2 flex justify-between items-center">
+<div class="flex gap-2">
+<button class="text-xs font-label-md text-on-surface-variant bg-surface border border-outline-variant px-2 py-1 rounded hover:bg-surface-container transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="tune">tune</span> Parameters
+                        </button>
+<button class="text-xs font-label-md text-on-surface-variant bg-surface border border-outline-variant px-2 py-1 rounded hover:bg-surface-container transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="history">history</span> Recent
+                        </button>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-4 py-1.5 rounded flex items-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[16px]" data-icon="send">send</span> Execute
+                    </button>
+</div>
+</div>
+<div class="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
+<span class="text-xs font-label-md text-outline-variant py-1 px-2">Suggestions:</span>
+<span class="text-xs font-data-mono text-secondary bg-surface-container border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high whitespace-nowrap">CAR-T therapies in Phase II</span>
+<span class="text-xs font-data-mono text-secondary bg-surface-container border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high whitespace-nowrap">Emerging IP landscape for solid-state batteries</span>
+<span class="text-xs font-data-mono text-secondary bg-surface-container border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high whitespace-nowrap">Key Opinion Leaders: Oncology EU</span>
+</div>
+</div>
+<!-- Dashboard Layout Grid -->
+<div class="grid grid-cols-12 gap-gutter max-w-full">
+<!-- Left Column: Results (Span 9) -->
+<div class="col-span-12 lg:col-span-9 flex flex-col gap-gutter">
+<!-- Generative Insight Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded flex flex-col relative overflow-hidden">
+<!-- Top accent line for "AI generated" feel -->
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-tertiary-fixed to-secondary-fixed"></div>
+<div class="border-b border-outline-variant px-4 py-3 flex justify-between items-center bg-surface-container-low/50">
+<h2 class="font-title-lg text-title-lg text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="lightbulb">lightbulb</span>
+                            Synthesized Insight
+                        </h2>
+<div class="flex gap-2">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]" data-icon="content_copy">content_copy</span></button>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]" data-icon="thumb_up">thumb_up</span></button>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]" data-icon="thumb_down">thumb_down</span></button>
+</div>
+</div>
+<div class="p-5 font-body-lg text-body-lg text-on-surface leading-relaxed">
+<p class="mb-4">
+                            The ecosystem for CRISPR applications in Indian agritech is currently characterized by early-stage academic spin-offs and mid-cap biopharma entities pivoting to agricultural verticals. Analysis of recent patent filings and funding rounds indicates a strong focus on drought-resistance and enhanced yield metrics in staple crops 
+                            <span class="citation-group relative inline-block cursor-help">
+<span class="bg-secondary-container text-on-secondary-container font-data-mono text-[10px] px-1.5 py-0.5 rounded border border-outline-variant align-super ml-0.5">[1]</span>
+<!-- Tooltip -->
+</span></p><div class="citation-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-inverse-surface text-inverse-on-surface text-xs p-3 rounded shadow-lg opacity-0 invisible transition-all duration-200 z-50 pointer-events-none">
+<div class="font-bold text-inverse-primary mb-1 border-b border-outline/30 pb-1">PubMed: PMC8912345</div>
+                                    "Gene Editing for Climate Resilience in Indian Subcontinent Staple Crops." Journal of Agritech Innovation, 2023.
+                                </div>
+.
+                        <p></p>
+<p>
+                            Key regulatory shifts in 2022 by the Department of Biotechnology (DBT) regarding SDN-1 and SDN-2 categories have accelerated commercialization timelines 
+                            <span class="citation-group relative inline-block cursor-help">
+<span class="bg-secondary-container text-on-secondary-container font-data-mono text-[10px] px-1.5 py-0.5 rounded border border-outline-variant align-super ml-0.5">[2]</span>
+</span></p><div class="citation-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-inverse-surface text-inverse-on-surface text-xs p-3 rounded shadow-lg opacity-0 invisible transition-all duration-200 z-50 pointer-events-none">
+<div class="font-bold text-inverse-primary mb-1 border-b border-outline/30 pb-1">Regulatory Doc: DBT-2022-Memo</div>
+                                    "Guidelines for Safety Assessment of Genome Edited Plants, 2022." Ministry of Science and Technology, Govt. of India.
+                                </div>
+. 
+                            Leading entities such as <span class="border-b border-dashed border-primary cursor-pointer hover:bg-surface-container px-1">AgriGenomix India</span> and <span class="border-b border-dashed border-primary cursor-pointer hover:bg-surface-container px-1">Tierra Seed Science</span> have secured significant Series A funding in the past 18 months, primarily backed by domestic venture capital focused on sustainable agriculture 
+                            <span class="citation-group relative inline-block cursor-help">
+<span class="bg-secondary-container text-on-secondary-container font-data-mono text-[10px] px-1.5 py-0.5 rounded border border-outline-variant align-super ml-0.5">[3]</span>
+<div class="citation-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-inverse-surface text-inverse-on-surface text-xs p-3 rounded shadow-lg opacity-0 invisible transition-all duration-200 z-50 pointer-events-none">
+<div class="font-bold text-inverse-primary mb-1 border-b border-outline/30 pb-1">PitchBook Data</div>
+                                    Venture Round Analysis: AgriGenomix ($12M Series A, Lead: Omnivore), Q3 2023.
+                                </div>
+</span>.
+                        <p></p>
+</div>
+</div>
+<!-- Bento Grid for Entities -->
+<div class="grid grid-cols-2 gap-gutter">
+<!-- Key Entities Table -->
+<div class="col-span-2 bg-surface-container-lowest border border-outline-variant rounded flex flex-col">
+<div class="border-b border-outline-variant px-4 py-2 flex justify-between items-center">
+<h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Identified Entities</h3>
+<button class="text-xs font-data-mono text-primary flex items-center hover:underline">View Full Graph <span class="material-symbols-outlined text-[14px] ml-1" data-icon="arrow_forward">arrow_forward</span></button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant text-xs font-label-md text-on-surface-variant">
+<th class="py-2 px-4 font-semibold w-1/3">Entity Name</th>
+<th class="py-2 px-4 font-semibold w-1/4">Type</th>
+<th class="py-2 px-4 font-semibold">Resolution ID</th>
+<th class="py-2 px-4 font-semibold text-right">Confidence</th>
+</tr>
+</thead>
+<tbody class="font-data-mono text-[12px] text-on-surface">
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low/50 transition-colors">
+<td class="py-2.5 px-4 font-medium flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary-container"></div>
+                                            AgriGenomix India
+                                        </td>
+<td class="py-2.5 px-4"><span class="bg-surface-container border border-outline-variant rounded px-1.5 py-0.5 text-[10px]">Startup</span></td>
+<td class="py-2.5 px-4 text-outline">CB-ORG-9821</td>
+<td class="py-2.5 px-4 text-right text-secondary">0.98</td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low/50 transition-colors">
+<td class="py-2.5 px-4 font-medium flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+                                            SDN-1 (Site-Directed Nuclease 1)
+                                        </td>
+<td class="py-2.5 px-4"><span class="bg-surface-container border border-outline-variant rounded px-1.5 py-0.5 text-[10px]">Technology</span></td>
+<td class="py-2.5 px-4 text-outline">UMLS:C45213</td>
+<td class="py-2.5 px-4 text-right text-secondary">0.95</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-2.5 px-4 font-medium flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary-container"></div>
+                                            Tierra Seed Science
+                                        </td>
+<td class="py-2.5 px-4"><span class="bg-surface-container border border-outline-variant rounded px-1.5 py-0.5 text-[10px]">Startup</span></td>
+<td class="py-2.5 px-4 text-outline">CB-ORG-4512</td>
+<td class="py-2.5 px-4 text-right text-secondary">0.89</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Filters & Metadata (Span 3) -->
+<div class="col-span-12 lg:col-span-3 flex flex-col gap-gutter">
+<!-- Refinement Panel -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded flex flex-col h-full">
+<div class="border-b border-outline-variant px-4 py-3 flex items-center gap-2 bg-surface-container-low/30">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant" data-icon="filter_list">filter_list</span>
+<h3 class="font-title-lg text-[16px] font-semibold text-primary">Entity Resolution</h3>
+</div>
+<div class="p-4 flex flex-col gap-5 overflow-y-auto">
+<!-- Filter Group 1 -->
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-[11px] text-outline uppercase tracking-wider flex justify-between">
+                                Ontologies
+                                <span class="material-symbols-outlined text-[14px] cursor-pointer" data-icon="add_circle">add_circle</span>
+</label>
+<div class="flex flex-col gap-1.5">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="rounded-sm border-outline-variant text-primary focus:ring-primary w-3.5 h-3.5 bg-surface" type="checkbox"/>
+<span class="font-data-mono text-[12px] text-on-surface group-hover:text-primary transition-colors">UMLS CUIs</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="rounded-sm border-outline-variant text-primary focus:ring-primary w-3.5 h-3.5 bg-surface" type="checkbox"/>
+<span class="font-data-mono text-[12px] text-on-surface group-hover:text-primary transition-colors">MeSH Terms</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="rounded-sm border-outline-variant text-primary focus:ring-primary w-3.5 h-3.5 bg-surface" type="checkbox"/>
+<span class="font-data-mono text-[12px] text-on-surface-variant group-hover:text-primary transition-colors">ICD-10 Codes</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="rounded-sm border-outline-variant text-primary focus:ring-primary w-3.5 h-3.5 bg-surface" type="checkbox"/>
+<span class="font-data-mono text-[12px] text-on-surface-variant group-hover:text-primary transition-colors">DrugBank IDs</span>
+</label>
+</div>
+</div>
+<div class="w-full h-px bg-outline-variant/30"></div>
+<!-- Filter Group 2 -->
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-[11px] text-outline uppercase tracking-wider">Target Domains</label>
+<div class="bg-surface-container-low p-1 rounded flex flex-wrap gap-1">
+<button class="bg-surface border border-outline-variant text-on-surface font-label-md text-[10px] px-2 py-1 rounded shadow-sm">Agritech</button>
+<button class="bg-transparent border border-transparent text-on-surface-variant hover:bg-surface-container font-label-md text-[10px] px-2 py-1 rounded">Pharma</button>
+<button class="bg-transparent border border-transparent text-on-surface-variant hover:bg-surface-container font-label-md text-[10px] px-2 py-1 rounded">Genomics</button>
+</div>
+</div>
+<div class="w-full h-px bg-outline-variant/30"></div>
+<!-- Threshold Input -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-[11px] text-outline uppercase tracking-wider">Confidence Threshold</label>
+<span class="font-data-mono text-[10px] text-secondary">0.85</span>
+</div>
+<input class="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="0" type="range" value="85"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Shared Component -->
+<footer class="bg-primary-container text-on-primary-container font-data-mono text-data-mono fixed bottom-0 z-40 w-full border-t border-tertiary-container shadow-lg flex justify-between items-center px-margin-desktop py-2 h-12">
+<div class="flex items-center gap-4 pl-64"> <!-- Adjusted padding to account for fixed sidenav visually if footer is w-full -->
+<span class="font-label-md text-label-md uppercase tracking-widest text-secondary-fixed">HITL Authorization Layer v4.2 | Human-in-the-Loop Orchestration Active</span>
+</div>
+<div class="flex gap-3">
+<button class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary dark:hover:bg-surface-container transition-colors px-3 py-1 rounded text-[11px]">Approve Memo</button>
+<button class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary dark:hover:bg-surface-container transition-colors px-3 py-1 rounded text-[11px]">Reject with Feedback</button>
+<button class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary dark:hover:bg-surface-container transition-colors px-3 py-1 rounded text-[11px]">Request Clinical Audit</button>
+<button class="text-on-primary-container/80 dark:text-on-surface-variant hover:bg-primary dark:hover:bg-surface-container transition-colors px-3 py-1 rounded text-[11px] border border-outline/30">View Evidence Graph</button>
+</div>
+</footer>
+</body></html>
