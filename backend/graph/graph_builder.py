@@ -1,5 +1,6 @@
 import os
-from typing import List, Dict, Any
+import re
+from typing import List, Dict, Any, Set
 from neo4j import GraphDatabase, Driver
 from backend.core.logger import get_logger
 from backend.core.exceptions import GraphConnectionError
@@ -12,143 +13,128 @@ def _get_neo4j_driver() -> Driver:
     user = os.environ.get("NEO4J_USER", "neo4j")
     password = os.environ.get("NEO4J_PASSWORD", "password")
     
-    logger.info(f"Initializing Neo4j connection to {uri}")
     try:
         driver = GraphDatabase.driver(uri, auth=(user, password))
-        # Verify connectivity
         driver.verify_connectivity()
         return driver
     except Exception as e:
-        logger.warning(f"Neo4j connection failed: {e}. Running in Cypher simulation mode.")
+        logger.error(f"Failed to connect to Neo4j: {e}")
         return None
 
-def generate_bkg_triplets(data: List[Dict[str, Any]], source_type: str) -> List[Dict[str, Any]]:
+def normalize_entity_name(name: str) -> str:
     """
-    Translates raw JSON from ingestion layers into standardized Triplets.
-    Outputs: [{"subject_label", "subject_id", "subject_props", 
-               "relation", 
-               "object_label", "object_id", "object_props"}]
+    Performs Entity Resolution (ER) by normalizing organization names.
+    Removes corporate suffixes and standardizes casing.
+    """
+    if not name: return ""
+    # Standardize casing
+    name = name.strip().upper()
+    # Remove common corporate suffixes
+    suffixes = [r"\bPVT\b", r"\bLTD\b", r"\bLIMITED\b", r"\bINC\b", r"\bCORP\b", r"\bCORPORATION\b", r"\bLLP\b"]
+    for suffix in suffixes:
+        name = re.sub(suffix, "", name)
+    # Remove extra whitespace
+    name = " ".join(name.split())
+    return name
+
+def translate_to_triplets(all_data: Dict[str, List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    """
+    Translates raw source data into Subject-Predicate-Object triplets.
+    Implements cross-source correlation logic.
     """
     triplets = []
-    logger.info(f"Translating {len(data)} records from {source_type} into Graph Triplets.")
     
-    if source_type == "layer1_patent":
-        for record in data:
-            patent_id = record.get("id")
-            if not patent_id: continue
-            
-            patent_props = {
-                "title": record.get("title"), 
-                "status": record.get("status"),
-                "abstract": record.get("abstract", ""),
-                "source_url": record.get("source_url", "")
-            }
-            
-            for inventor in record.get("inventors", []):
-                triplets.append({
-                    "subject_label": "Person", "subject_id": inventor, "subject_props": {"name": inventor},
-                    "relation": "INVENTED",
-                    "object_label": "Patent", "object_id": patent_id, "object_props": patent_props
-                })
-                
-    elif source_type == "layer3_tracxn":
-        for record in data:
-            startup_name = record.get("startup")
-            if not startup_name: continue
-            
-            startup_props = {
-                "stage": record.get("stage"), 
-                "funding_usd": record.get("total_funding_usd"),
-                "source_url": record.get("source_url", "")
-            }
-            
-            for founder in record.get("founders", []):
-                triplets.append({
-                    "subject_label": "Person", "subject_id": founder, "subject_props": {"name": founder},
-                    "relation": "FOUNDED",
-                    "object_label": "Company", "object_id": startup_name, "object_props": startup_props
-                })
-                
-            for investor in record.get("lead_investors", []):
-                triplets.append({
-                    "subject_label": "Investor", "subject_id": investor, "subject_props": {"name": investor},
-                    "relation": "INVESTED_IN",
-                    "object_label": "Company", "object_id": startup_name, "object_props": {}
-                })
-                
-    elif source_type == "layer5_ddrs":
-        for record in data:
-            device_id = record.get("nct_id")
-            manufacturer = record.get("sponsor")
-            if not device_id or not manufacturer: continue
-            
-            device_props = {
-                "phases": record.get("phases"), 
-                "source_url": record.get("source_url", "")
-            }
-            
+    # Store mechanisms and therapeutic areas to create cross-layer links
+    mechanisms_map = {} # mechanism_id -> clinical_trial_id
+    
+    # Layer 1: Patents
+    for record in all_data.get("layer1_patent", []):
+        subj_id = normalize_entity_name(record.get("title", "Unknown Patent"))
+        triplets.append({
+            "subject_label": "Patent", "subject_id": subj_id, 
+            "subject_props": {"name": record.get("title"), "date": record.get("date"), "url": record.get("source_url")},
+            "relation": "FILED_IN",
+            "object_label": "Country", "object_id": "India", "object_props": {"name": "India"}
+        })
+
+    # Layer 2: NDAP (Infrastructure)
+    for record in all_data.get("layer2_ndap", []):
+        district = record.get("district")
+        state = record.get("state")
+        triplets.append({
+            "subject_label": "District", "subject_id": district, "subject_props": {"name": district, "state": state, "facilities": record.get("facility_count")},
+            "relation": "LOCATED_IN",
+            "object_label": "State", "object_id": state, "object_props": {"name": state}
+        })
+
+    # Layer 3: Market (OpenAlex Institutions)
+    for record in all_data.get("layer3_tracxn", []):
+        company = normalize_entity_name(record.get("startup"))
+        triplets.append({
+            "subject_label": "Company", "subject_id": company, "subject_props": {"name": record.get("startup"), "funding_usd": record.get("total_funding_usd")},
+            "relation": "OPERATES_IN",
+            "object_label": "Sector", "object_id": "Healthcare", "object_props": {"name": "Healthcare"}
+        })
+
+    # Layer 5: Regulatory (CTRI)
+    for record in all_data.get("layer5_ddrs", []):
+        trial_id = record.get("nct_id")
+        sponsor = normalize_entity_name(record.get("sponsor"))
+        summary = record.get("summary", "").lower()
+        
+        trial_props = {
+            "name": record.get("title"),
+            "phases": record.get("phases"),
+            "trial_type": record.get("trial_type", "Interventional"),
+            "mechanism": record.get("mechanism", "Standard")
+        }
+        
+        # Link Sponsor to Trial (Deduplicated Sponsor)
+        triplets.append({
+            "subject_label": "Company", "subject_id": sponsor, "subject_props": {"name": record.get("sponsor")},
+            "relation": "SPONSORS",
+            "object_label": "ClinicalTrial", "object_id": trial_id, "object_props": trial_props
+        })
+        
+        # Correlation: Link to Mechanism
+        mech = record.get("mechanism")
+        if mech and mech != "Standard":
             triplets.append({
-                "subject_label": "Company", "subject_id": manufacturer, "subject_props": {"name": manufacturer},
-                "relation": "SPONSORS",
-                "object_label": "ClinicalTrial", "object_id": device_id, "object_props": device_props
+                "subject_label": "ClinicalTrial", "subject_id": trial_id, "subject_props": trial_props,
+                "relation": "UTILIZES",
+                "object_label": "Mechanism", "object_id": mech, "object_props": {"name": mech}
             })
-            
-    elif source_type == "layer6_cofunding":
-        for record in data:
-            grant_id = record.get("grant_id")
-            funder = record.get("funder_name")
-            company = record.get("recipient_company")
-            
-            if not funder or not company: continue
-            
-            grant_props = {
-                "grant_id": grant_id,
-                "grant_name": record.get("program_title"),
-                "grant_amount_usd": record.get("grant_amount_usd"),
-                "date_awarded": record.get("date_awarded")
-            }
-            
-            triplets.append({
-                "subject_label": "Funder", "subject_id": funder, "subject_props": {"name": funder},
-                "relation": "FUNDED",
-                "object_label": "Company", "object_id": company, "object_props": grant_props
-            })
+
+    # Layer 6: Co-funding (BIRAC)
+    for record in all_data.get("layer6_cofunding", []):
+        company = normalize_entity_name(record.get("recipient_company"))
+        funder = normalize_entity_name(record.get("funder_name"))
+        
+        # Cross-Source Link: If this company is also sponsoring a trial, Neo4j will automatically 
+        # merge the nodes because the 'subject_id' is normalized.
+        triplets.append({
+            "subject_label": "Funder", "subject_id": funder, "subject_props": {"name": record.get("funder_name")},
+            "relation": "FUNDED",
+            "object_label": "Company", "object_id": company, "object_props": {"name": record.get("recipient_company")}
+        })
 
     return triplets
 
-def _format_triplets_for_cypher(triplets: List[Dict[str, Any]]) -> str:
-    """Transforms raw triplets into Neo4j Cypher query parameters."""
-    # This query uses APOC or dynamic labels if supported, but for strict 
-    # safe parameterized queries without APOC, we execute them individually in the push_to_neo4j function
-    # to handle dynamic node labels properly.
-    pass
-
-def push_to_neo4j(triplets: List[Dict[str, Any]]) -> bool:
+def process_and_push_triplets(all_data: Dict[str, List[Dict[str, Any]]]):
     """
-    Normalizes data into the BKG schema mapping Subject-Predicate-Object triplets
-    and pushes to Neo4j.
+    Main entry point for the graph intelligence engine.
+    Performs translation, de-duplication, and Neo4j push.
     """
-    if not triplets:
-        logger.warning("No triplets provided to push_to_neo4j.")
-        return False
-        
-    driver = _get_neo4j_driver()
-    logger.info(f"Pushing {len(triplets)} triplets to Neo4j Graph DB...")
+    triplets = translate_to_triplets(all_data)
     
-    if driver is None:
-        logger.info("Simulation Mode: Printing first 2 Cypher queries instead of executing.")
-        for i, t in enumerate(triplets[:2]):
-            query = f"MERGE (s:{t['subject_label']} {{id: '{t['subject_id']}'}}) " \
-                    f"MERGE (o:{t['object_label']} {{id: '{t['object_id']}'}}) " \
-                    f"MERGE (s)-[:{t['relation']}]->(o)"
-            logger.info(f"CYPHER: {query}")
-        return True
-
+    driver = _get_neo4j_driver()
+    if not driver:
+        logger.error("No Neo4j driver available. Aborting push.")
+        return
+        
     try:
         with driver.session() as session:
             for t in triplets:
-                # To prevent Cypher injection and handle dynamic labels safely
-                # MERGE constraints are based on the unique 'id' field
                 query = (
                     f"MERGE (s:{t['subject_label']} {{id: $subj_id}}) "
                     f"SET s += $subj_props "
@@ -156,16 +142,11 @@ def push_to_neo4j(triplets: List[Dict[str, Any]]) -> bool:
                     f"SET o += $obj_props "
                     f"MERGE (s)-[:{t['relation']}]->(o)"
                 )
-                
                 session.run(query, 
-                            subj_id=t["subject_id"], 
-                            subj_props=t["subject_props"],
-                            obj_id=t["object_id"], 
-                            obj_props=t["object_props"])
-                
-        return True
+                            subj_id=t["subject_id"], subj_props=t["subject_props"],
+                            obj_id=t["object_id"], obj_props=t["object_props"])
+        logger.info(f"Successfully pushed {len(triplets)} normalized triplets to Neo4j.")
     except Exception as e:
-        logger.error(f"Failed to push to Neo4j: {e}")
-        raise GraphConnectionError(f"Neo4j transaction failed: {e}") from e
+        logger.error(f"Failed to push triplets: {e}")
     finally:
         driver.close()

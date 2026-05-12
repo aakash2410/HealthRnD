@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from backend.api.rag_engine import handle_rag_query
+from backend.graph.graph_queries import get_dashboard_metrics, get_scouting_signals, get_all_entities
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -20,13 +21,13 @@ app.add_middleware(
 
 class QueryRequest(BaseModel):
     query: str
+    mode: str = "orchestration"
 
 @app.post("/api/rag")
 async def rag_endpoint(request: QueryRequest):
-    logger.info(f"Received query from frontend: {request.query}")
+    logger.info(f"Received {request.mode} query from frontend: {request.query}")
     try:
-        result = handle_rag_query(request.query)
-        # handle_rag_query returns a dict like {"status": "success", "data": "string", "graph_data": {...}}
+        result = handle_rag_query(request.query, mode=request.mode)
         if result.get("status") == "success":
             return {"status": "success", "response": result["data"], "graph_data": result.get("graph_data")}
         else:
@@ -34,6 +35,18 @@ async def rag_endpoint(request: QueryRequest):
     except Exception as e:
         logger.error(f"RAG Engine failed: {e}")
         return {"status": "error", "response": f"System Error: {str(e)}"}
+
+@app.get("/api/dashboard/metrics")
+async def dashboard_metrics():
+    return get_dashboard_metrics()
+
+@app.get("/api/dashboard/signals")
+async def dashboard_signals():
+    return get_scouting_signals()
+
+@app.get("/api/discovery/entities")
+async def discovery_entities():
+    return get_all_entities()
 
 @app.get("/api/health")
 async def health_check():

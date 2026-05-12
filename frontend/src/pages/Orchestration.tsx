@@ -16,7 +16,7 @@ const Orchestration = () => {
     setGraphData({ nodes: [], links: [] });
     
     try {
-      const res = await axios.post('http://localhost:8000/api/rag', { query });
+      const res = await axios.post('http://localhost:8000/api/rag', { query, mode: 'orchestration' });
       if (res.data.status === 'success') {
         setAiResponse(res.data.response);
         if (res.data.graph_data) {
