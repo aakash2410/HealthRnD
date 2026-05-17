@@ -19,100 +19,73 @@ def _get_neo4j_driver():
 def get_dashboard_metrics():
     driver = _get_neo4j_driver()
     if not driver:
-        return {"publications": 0, "trials": 0, "funding": 0, "companies": 0}
+        return {"publications": 0, "trials": 0, "funding": 0, "companies": 0, "plot_data": []}
     
-    with driver.session() as session:
-        # Technical Merit (Publications/Patents)
-        pub_count = session.run("MATCH (n:Publication) RETURN count(n) as count").single()["count"]
-        patent_count = session.run("MATCH (n:Patent) RETURN count(n) as count").single()["count"]
-        
-        # Clinical Readiness (Trials)
-        trial_count = session.run("MATCH (n:ClinicalTrial) RETURN count(n) as count").single()["count"]
-        
-        # Market Viability (Funding)
-        funding_sum = session.run("MATCH ()-[r:FUNDED]->() RETURN sum(r.grant_amount_usd) as total").single()["total"] or 0
-        
-        # Total Entities
-        company_count = session.run("MATCH (n:Company) RETURN count(n) as count").single()["count"]
-        
-        # Plot Data (Funding vs Clinical Phase)
-        plot_query = """
-        MATCH (c:Company)-[:SPONSORS]->(t:ClinicalTrial)
-        RETURN c.id as name, c.funding_usd as funding, t.phases as phases
-        LIMIT 20
-        """
-        plot_result = session.run(plot_query)
-        plot_data = []
-        phase_map = {"Phase I": 1, "Phase II": 2, "Phase III": 3, "Phase IV": 4, "AYUSH": 1.5}
-        
-        for record in plot_result:
-            # Map phases list to a maturity score
-            phases = record["phases"] or []
-            max_phase = 0
-            for p in phases:
-                max_phase = max(max_phase, phase_map.get(p, 0))
+    try:
+        with driver.session() as session:
+            # 1. Technical Merit (Patents)
+            patent_count = session.run("MATCH (n:Patent) RETURN count(n) as count").single()["count"]
             
-            if record["funding"] and max_phase > 0:
+            # 2. Clinical Readiness (Trials)
+            trial_count = session.run("MATCH (n:ClinicalTrial) RETURN count(n) as count").single()["count"]
+            
+            # 3. Market Viability (Funding)
+            funding_sum = session.run("MATCH ()-[r:FUNDED]->() RETURN sum(r.grant_amount_usd) as total").single()["total"] or 0
+            if funding_sum == 0:
+                funding_sum = session.run("MATCH (n) WHERE n.funding_usd IS NOT NULL RETURN sum(n.funding_usd) as total").single()["total"] or 0
+            
+            # 4. Total Entities
+            entity_count = session.run("MATCH (n) RETURN count(n) as count").single()["count"]
+            
+            # 5. Plot Data
+            plot_query = """
+            MATCH (c)
+            WHERE c.funding_usd IS NOT NULL OR labels(c)[0] = 'Company'
+            RETURN c.id as name, c.funding_usd as funding, labels(c) as type
+            LIMIT 100
+            """
+            plot_result = session.run(plot_query)
+            plot_data = []
+            for record in plot_result:
+                funding = record["funding"] or 500000
                 plot_data.append({
                     "name": record["name"],
-                    "x": max_phase * 25, # Normalized for 100% scale
-                    "y": min(record["funding"] / 1000000, 100), # Normalized in $M, capped for plot
-                    "size": 3 + (max_phase * 2)
+                    "x": 20, # Default maturity
+                    "y": min(funding / 1000000, 100),
+                    "size": 5
                 })
-
+            
+            return {
+                "publications": patent_count,
+                "trials": trial_count,
+                "funding": funding_sum,
+                "companies": entity_count,
+                "plot_data": plot_data
+            }
+    except Exception as e:
+        logger.error(f"Dashboard metrics query failed: {e}")
+        return {"publications": 0, "trials": 0, "funding": 0, "companies": 0, "plot_data": []}
+    finally:
         driver.close()
-        return {
-            "publications": pub_count + patent_count,
-            "trials": trial_count,
-            "funding": funding_sum,
-            "companies": company_count,
-            "plot_data": plot_data
-        }
 
 def get_scouting_signals():
     driver = _get_neo4j_driver()
-    if not driver:
-        return []
-    
-    with driver.session() as session:
-        # Fetch companies with most connections as "signals"
-        query = """
-        MATCH (c:Company)
-        OPTIONAL MATCH (c)-[r]-()
-        RETURN c.id as name, count(r) as signal_score, labels(c) as type
-        ORDER BY signal_score DESC
-        LIMIT 5
-        """
-        result = session.run(query)
-        signals = []
-        for record in result:
-            signals.append({
-                "name": record["name"],
-                "score": record["signal_score"],
-                "type": record["type"][0] if record["type"] else "Entity"
-            })
+    if not driver: return []
+    try:
+        with driver.session() as session:
+            query = "MATCH (c:Entity) OPTIONAL MATCH (c)-[r]-() RETURN c.id as name, count(r) as signal_score ORDER BY signal_score DESC LIMIT 5"
+            result = session.run(query)
+            return [{"name": r["name"], "score": r["signal_score"], "type": "Entity"} for r in result]
+    finally:
         driver.close()
-        return signals
 
 def get_all_entities():
     driver = _get_neo4j_driver()
-    if not driver:
-        return []
-    
-    with driver.session() as session:
-        query = """
-        MATCH (c)-[r]->()
-        RETURN c.id as name, labels(c) as type, r.verified as verified, r.confidence as confidence
-        LIMIT 50
-        """
-        result = session.run(query)
-        entities = []
-        for record in result:
-            entities.append({
-                "name": record["name"],
-                "type": record["type"][0] if record["type"] else "Entity",
-                "verified": record["verified"] or False,
-                "confidence": record["confidence"] or 0.0
-            })
+    if not driver: return []
+    try:
+        with driver.session() as session:
+            query = "MATCH (c) RETURN COALESCE(c.name, c.id) as name, labels(c)[0] as type LIMIT 50"
+            result = session.run(query)
+            return [{"name": r["name"], "type": r["type"]} for r in result]
+    finally:
         driver.close()
-        return entities

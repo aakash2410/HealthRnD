@@ -17,6 +17,7 @@
     "react-dom": "^19.2.5",
     "react-force-graph-3d": "^1.29.1",
     "react-router-dom": "^7.15.0",
+    "recharts": "^3.8.1",
     "three": "^0.184.0"
   },
   "devDependencies": {

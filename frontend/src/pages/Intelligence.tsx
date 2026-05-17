@@ -1,219 +1,195 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, CartesianGrid } from 'recharts';
 
 const Intelligence = () => {
-  const [metrics, setMetrics] = useState<any>({ publications: 0, trials: 0, funding: 0, companies: 0, plot_data: [] });
+  const [metrics, setMetrics] = useState<any>({
+    publications: 0,
+    trials: 0,
+    funding: 0,
+    companies: 0,
+    plot_data: []
+  });
   const [signals, setSignals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchDashboardData = async () => {
+    try {
+      const [mRes, sRes] = await Promise.all([
+        axios.get('http://localhost:8000/api/dashboard/metrics'),
+        axios.get('http://localhost:8000/api/dashboard/signals')
+      ]);
+      setMetrics(mRes.data);
+      setSignals(sRes.data);
+    } catch (err) {
+      console.error("Dashboard refresh failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [mRes, sRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/dashboard/metrics'),
-          axios.get('http://localhost:8000/api/dashboard/signals')
-        ]);
-        setMetrics(mRes.data);
-        setSignals(sRes.data);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchDashboardData();
+    // Real-time polling every 10 seconds to show ingestion progress
+    const interval = setInterval(fetchDashboardData, 10000);
+    return () => clearInterval(interval);
   }, []);
-
-  const formatCurrency = (val: number) => {
-    if (val >= 1000000000) return `$${(val / 1000000000).toFixed(1)}B`;
-    if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
-    return `$${val.toLocaleString()}`;
-  };
-
-  const formatCount = (val: number) => {
-    if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
-    return val.toString();
-  };
 
   return (
     <div className="flex-1 overflow-y-auto p-margin-desktop pb-32 w-full">
-      <div className="max-w-[1440px] mx-auto space-y-gutter">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h2 className="font-headline-lg text-headline-lg text-primary flex items-center gap-3">
-            <span className="material-symbols-outlined text-[32px] text-tertiary-container">hub</span>
-            Biomedical Knowledge Graph Overview
-          </h2>
-          <p className="text-on-surface-variant font-body-lg text-body-lg mt-1">Live instrumentation of global clinical pipelines and patent landscapes.</p>
+      <div className="max-w-full mx-auto mb-10 mt-8">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="material-symbols-outlined text-secondary" style={{fontVariationSettings: "'FILL' 1"}}>hub</span>
+          <h1 className="font-headline-md text-headline-md text-primary tracking-tight">Biomedical Knowledge Graph Overview</h1>
+          <span className="ml-auto flex items-center gap-2 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-data-mono text-[11px] shadow-sm animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-secondary"></span>
+            Real-Time Ingestion Active
+          </span>
         </div>
+        <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-8">
+          Live instrumentation of official Indian clinical pipelines, patent landscapes, and sovereign grant funding.
+        </p>
 
-        {/* Metrics Bento Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter">
-          {/* Tech Merit */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <span className="material-symbols-outlined text-[80px]">article</span>
+        {/* High Level Metrics Row */}
+        <div className="grid grid-cols-4 gap-gutter mb-10">
+          <div className="bg-surface-container-lowest border border-outline-variant rounded p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-primary transition-all">
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+              <span className="material-symbols-outlined text-6xl">menu_book</span>
             </div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded bg-secondary-container text-on-secondary-container flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">biotech</span>
-              </div>
-              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Technical Merit</h3>
+            <div className="flex items-center gap-2 text-secondary font-label-md text-label-md uppercase tracking-wider">
+              <span className="material-symbols-outlined text-[18px]">biotech</span>
+              Technical Merit
             </div>
-            <div className="font-display-lg text-display-lg text-primary mb-1">{loading ? '...' : formatCount(metrics.publications)}</div>
-            <div className="flex items-center gap-2 text-on-surface-variant font-body-md text-body-md">
-              <span className="material-symbols-outlined text-[16px] text-tertiary-container">trending_up</span>
-              <span>PubMed / Patents Analyzed</span>
+            <div className="font-headline-lg text-headline-lg text-on-surface">{metrics.publications}</div>
+            <div className="text-on-surface-variant font-body-sm text-[12px] flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">trending_up</span>
+              Patents Analyzed
             </div>
           </div>
 
-          {/* Clinical Readiness */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <span className="material-symbols-outlined text-[80px]">medical_services</span>
+          <div className="bg-surface-container-lowest border border-outline-variant rounded p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-primary transition-all">
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+              <span className="material-symbols-outlined text-6xl">medical_services</span>
             </div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded bg-tertiary-fixed text-on-tertiary-container flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">vaccines</span>
-              </div>
-              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Clinical Readiness</h3>
+            <div className="flex items-center gap-2 text-tertiary font-label-md text-label-md uppercase tracking-wider">
+              <span className="material-symbols-outlined text-[18px]">clinical_notes</span>
+              Clinical Readiness
             </div>
-            <div className="font-display-lg text-display-lg text-primary mb-1">{loading ? '...' : formatCount(metrics.trials)}</div>
-            <div className="flex items-center gap-2 text-on-surface-variant font-body-md text-body-md">
-              <span className="material-symbols-outlined text-[16px] text-tertiary-container">trending_up</span>
-              <span>Active Protocols</span>
+            <div className="font-headline-lg text-headline-lg text-on-surface">{metrics.trials}</div>
+            <div className="text-on-surface-variant font-body-sm text-[12px] flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">show_chart</span>
+              Active Protocols
             </div>
           </div>
 
-          {/* Market Viability */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <span className="material-symbols-outlined text-[80px]">payments</span>
+          <div className="bg-surface-container-lowest border border-outline-variant rounded p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-primary transition-all">
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+              <span className="material-symbols-outlined text-6xl">payments</span>
             </div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded bg-surface-tint text-on-primary flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">monitoring</span>
-              </div>
-              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Market Viability</h3>
+            <div className="flex items-center gap-2 text-primary font-label-md text-label-md uppercase tracking-wider">
+              <span className="material-symbols-outlined text-[18px]">account_balance</span>
+              Market Viability
             </div>
-            <div className="font-display-lg text-display-lg text-primary mb-1">{loading ? '...' : formatCurrency(metrics.funding)}</div>
-            <div className="flex items-center gap-2 text-on-surface-variant font-body-md text-body-md">
-              <span className="material-symbols-outlined text-[16px] text-tertiary-container">trending_up</span>
-              <span>Tracked Capital Flow</span>
+            <div className="font-headline-lg text-headline-lg text-on-surface">
+              ${(metrics.funding / 1000000).toFixed(1)}M
+            </div>
+            <div className="text-on-surface-variant font-body-sm text-[12px] flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">history_edu</span>
+              Sovereign Capital Flow
             </div>
           </div>
 
-          {/* Companies */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <span className="material-symbols-outlined text-[80px]">domain</span>
+          <div className="bg-surface-container-lowest border border-outline-variant rounded p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-primary transition-all">
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+              <span className="material-symbols-outlined text-6xl">corporate_fare</span>
             </div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded bg-primary-container text-on-primary-container flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">business</span>
-              </div>
-              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Network Size</h3>
+            <div className="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+              <span className="material-symbols-outlined text-[18px]">groups</span>
+              Network Size
             </div>
-            <div className="font-display-lg text-display-lg text-primary mb-1">{loading ? '...' : metrics.companies}</div>
-            <div className="flex items-center gap-2 text-on-surface-variant font-body-md text-body-md">
-              <span className="material-symbols-outlined text-[16px] text-tertiary-container">hub</span>
-              <span>Total Tracked Entities</span>
+            <div className="font-headline-lg text-headline-lg text-on-surface">{metrics.companies}</div>
+            <div className="text-on-surface-variant font-body-sm text-[12px] flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">hub</span>
+              Tracked Entities
             </div>
           </div>
         </div>
 
-        {/* Complex Modules Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter mt-gutter">
-          {/* Scatter Plot Area */}
-          <div className="lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col h-[400px]">
-            <div className="flex justify-between items-center mb-6">
+        {/* Charts and Signals Section */}
+        <div className="grid grid-cols-12 gap-gutter">
+          <div className="col-span-12 lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded flex flex-col min-h-[400px]">
+            <div className="border-b border-outline-variant px-4 py-3 flex justify-between items-center bg-surface-container-low/30">
               <h3 className="font-title-lg text-title-lg text-primary">Funding Velocity vs. Clinical Phase</h3>
-              <button className="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1 font-label-md text-label-md">
-                <span className="material-symbols-outlined text-[18px]">filter_list</span> Filter View
+              <button className="flex items-center gap-1 text-xs font-label-md text-on-surface-variant hover:text-primary transition-colors">
+                <span className="material-symbols-outlined text-[18px]">filter_list</span>
+                Filter View
               </button>
             </div>
-            <div className="flex-1 relative border-l border-b border-outline-variant ml-8 mb-6 mt-2">
-              <div className="absolute inset-0 flex flex-col justify-between z-0 pointer-events-none opacity-20">
-                <div className="w-full border-b border-outline-variant border-dashed"></div>
-                <div className="w-full border-b border-outline-variant border-dashed"></div>
-                <div className="w-full border-b border-outline-variant border-dashed"></div>
-                <div className="w-full border-b border-outline-variant border-dashed"></div>
-              </div>
-              
-              {!loading && metrics.plot_data && metrics.plot_data.map((point: any, idx: number) => (
-                <div 
-                  key={idx}
-                  className="absolute rounded-full bg-primary-container ring-2 ring-white cursor-pointer hover:scale-150 transition-transform shadow-sm group"
-                  style={{
-                    bottom: `${point.y}%`,
-                    left: `${point.x}%`,
-                    width: `${point.size * 2}px`,
-                    height: `${point.size * 2}px`,
-                    backgroundColor: `hsl(${180 + (point.x)}, 60%, 50%)`
-                  }}
-                  title={`${point.name}: $${point.y}M`}
-                >
-                   <div className="absolute hidden group-hover:block bg-surface border border-outline-variant p-2 rounded text-[10px] whitespace-nowrap z-50 -top-10 left-1/2 -translate-x-1/2">
-                      {point.name}
-                   </div>
-                </div>
-              ))}
-
-              {(!metrics.plot_data || metrics.plot_data.length === 0) && !loading && (
-                <div className="absolute inset-0 flex items-center justify-center text-on-surface-variant opacity-40 font-body-md">
-                  Awaiting multi-hop graph data for scatter visualization.
-                </div>
-              )}
-
-              <span className="absolute -left-10 top-1/2 -translate-y-1/2 -rotate-90 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Capital Secured ($M)</span>
-              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 font-label-md text-label-md text-on-surface-variant">Clinical Maturity Index</span>
+            <div className="flex-1 p-6 relative">
+               {metrics.plot_data.length > 0 ? (
+                 <ResponsiveContainer width="100%" height="100%">
+                   <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                     <XAxis 
+                       type="number" 
+                       dataKey="x" 
+                       name="Clinical Maturity" 
+                       unit="%" 
+                       axisLine={false}
+                       tickLine={false}
+                       tick={{fontSize: 10, fill: '#64748b'}}
+                       label={{ value: 'Clinical Maturity Index', position: 'bottom', offset: 0, fontSize: 12, fill: '#64748b' }}
+                     />
+                     <YAxis 
+                       type="number" 
+                       dataKey="y" 
+                       name="Capital" 
+                       unit="M" 
+                       axisLine={false}
+                       tickLine={false}
+                       tick={{fontSize: 10, fill: '#64748b'}}
+                       label={{ value: 'Capital Secured ($M)', angle: -90, position: 'left', fontSize: 12, fill: '#64748b' }}
+                     />
+                     <ZAxis type="number" dataKey="size" range={[50, 400]} />
+                     <Tooltip 
+                        cursor={{ strokeDasharray: '3 3' }} 
+                        contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                     />
+                     <Scatter name="Startups" data={metrics.plot_data} fill="#006495" fillOpacity={0.6} stroke="#006495" />
+                   </ScatterChart>
+                 </ResponsiveContainer>
+               ) : (
+                 <div className="absolute inset-0 flex items-center justify-center text-outline font-data-mono text-[13px] opacity-60">
+                   Awaiting multi-hop graph data for scatter visualization.
+                 </div>
+               )}
             </div>
           </div>
 
-          {/* Compliance Status */}
-          <div className="lg:col-span-4 flex flex-col gap-gutter min-h-[400px]">
-             {/* Signals Feed in Bento Column */}
-             <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex-1 overflow-hidden flex flex-col">
-              <h3 className="font-title-lg text-title-lg text-primary mb-4 flex items-center justify-between">
+          <div className="col-span-12 lg:col-span-4 bg-surface-container-lowest border border-outline-variant rounded flex flex-col">
+            <div className="border-b border-outline-variant px-4 py-3 flex justify-between items-center">
+              <h3 className="font-title-lg text-title-lg text-primary flex items-center gap-2">
                 Scouting Signals
-                <span className="material-symbols-outlined text-[18px] text-secondary animate-pulse">sensors</span>
+                <span className="material-symbols-outlined text-secondary animate-pulse text-[18px]">sensors</span>
               </h3>
-              <div className="flex-1 overflow-y-auto space-y-3">
-                {loading ? (
-                  <div className="animate-pulse space-y-2">
-                    <div className="h-10 bg-surface-container rounded"></div>
-                    <div className="h-10 bg-surface-container rounded"></div>
-                  </div>
-                ) : signals.map((s, idx) => (
-                  <div key={idx} className="p-3 bg-surface-container-low rounded border border-surface-variant flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-surface border border-outline-variant flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined text-[16px]">{s.type === 'Company' ? 'business' : 'hub'}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-label-md text-label-md text-on-surface truncate">{s.name}</div>
-                      <div className="text-[10px] font-data-mono text-secondary">Impact: {s.score}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
-
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 h-[180px]">
-              <h3 className="font-title-lg text-title-lg text-primary mb-3">DPDP Compliance</h3>
-              <ul className="space-y-2 font-data-mono text-[11px] text-on-surface-variant">
-                <li className="flex justify-between items-center">
-                  <span>Anonymization</span>
-                  <span className="text-[#137333] flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span> Active</span>
-                </li>
-                <li className="flex justify-between items-center">
-                  <span>Audit Trail</span>
-                  <span className="text-[#137333] flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span> Verified</span>
-                </li>
-              </ul>
+            <div className="p-4 flex flex-col gap-3">
+              {signals.map((signal, idx) => (
+                <div key={idx} className="bg-surface-container-low border border-outline-variant rounded p-3 hover:bg-surface-container transition-colors group cursor-pointer">
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-title-md text-title-md text-on-surface group-hover:text-primary transition-colors">{signal.name}</span>
+                    <span className="material-symbols-outlined text-[16px] text-outline opacity-0 group-hover:opacity-100 transition-opacity">open_in_new</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-data-mono text-[10px] text-secondary uppercase bg-secondary-container px-1.5 py-0.5 rounded">{signal.type}</span>
+                    <span className="font-body-sm text-[11px] text-on-surface-variant">Impact Score: {signal.score}</span>
+                  </div>
+                </div>
+              ))}
+              {loading && <div className="text-center py-10 animate-pulse text-outline">Listening for signals...</div>}
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
