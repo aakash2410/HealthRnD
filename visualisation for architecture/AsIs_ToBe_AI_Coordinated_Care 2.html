@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>As-Is vs To-Be — AI-Enabled Coordinated Care</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #222;
+    background: #fff;
+    padding: 28px 32px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #1a3f6f;
+  }
+  .page-header h1 {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1a3f6f;
+    margin-bottom: 4px;
+  }
+  .page-header p {
+    font-size: 11px;
+    color: #555;
+  }
+
+  /* ── Column headers ── */
+  .col-headers {
+    display: grid;
+    grid-template-columns: 110px 1fr 90px 1fr;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .col-hdr {
+    padding: 7px 10px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: center;
+    border-radius: 3px;
+  }
+  .col-hdr.stage  { background: #fff; color: #fff; } /* spacer */
+  .col-hdr.asis   { background: #6b6b6b; color: #fff; }
+  .col-hdr.gap    { background: #fff; color: #fff; }
+  .col-hdr.tobe   { background: #1a3f6f; color: #fff; }
+
+  /* ── Journey row ── */
+  .journey-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 90px 1fr;
+    gap: 6px;
+    margin-bottom: 8px;
+    align-items: stretch;
+  }
+
+  /* Stage label */
+  .stage-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px 6px 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.4;
+    gap: 6px;
+  }
+  .stage-label i { font-size: 20px; }
+  .stage-label.anc      { background: #eaf0fb; color: #1a3f6f; border: 1.5px solid #b0c8ee; }
+  .stage-label.labor    { background: #fdf0e8; color: #7a3200; border: 1.5px solid #e8b880; }
+  .stage-label.postpart { background: #fde8ee; color: #7a1a2e; border: 1.5px solid #e8a0b4; }
+  .stage-label.neonatal { background: #e8f5e8; color: #1a5c1a; border: 1.5px solid #90c890; }
+
+  /* As-is panel */
+  .asis-panel {
+    background: #f5f5f5;
+    border: 1px solid #ccc;
+    border-left: 4px solid #888;
+    padding: 10px 12px;
+    border-radius: 3px;
+  }
+  .asis-panel .panel-title {
+    font-size: 10px;
+    font-weight: bold;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .asis-panel ul {
+    list-style: none;
+    padding: 0;
+  }
+  .asis-panel ul li {
+    font-size: 11px;
+    color: #444;
+    padding: 3px 0 3px 14px;
+    position: relative;
+    line-height: 1.4;
+    border-bottom: 1px dotted #ddd;
+  }
+  .asis-panel ul li:last-child { border-bottom: none; }
+  .asis-panel ul li::before {
+    content: "·";
+    position: absolute;
+    left: 0;
+    color: #999;
+    font-size: 10px;
+    top: 4px;
+  }
+  .gap-tag {
+    display: inline-block;
+    background: #ffe0e0;
+    color: #8b0000;
+    border: 1px solid #e0a0a0;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 9.5px;
+    font-weight: bold;
+    margin-top: 4px;
+  }
+
+  /* Gap arrow column */
+  .gap-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px;
+  }
+  .gap-arrow {
+    font-size: 22px;
+    color: #1a3f6f;
+  }
+  .gap-label {
+    font-size: 9px;
+    color: #1a3f6f;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  /* To-be panel */
+  .tobe-panel {
+    background: #f0f5ff;
+    border: 1px solid #b0c8ee;
+    border-left: 4px solid #1a3f6f;
+    padding: 10px 12px;
+    border-radius: 3px;
+  }
+  .tobe-panel .panel-title {
+    font-size: 10px;
+    font-weight: bold;
+    color: #1a3f6f;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .tobe-panel .ai-items {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .ai-item {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 5px 8px;
+    background: #fff;
+    border: 1px solid #c8d8f0;
+    border-radius: 3px;
+  }
+  .ai-item .ai-icon {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    background: #1a3f6f;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .ai-item .ai-icon.startup { background: #e08000; }
+  .ai-item .ai-icon.abdm   { background: #1a3f6f; }
+  .ai-item .ai-content { flex: 1; }
+  .ai-item .ai-name {
+    font-size: 11px;
+    font-weight: bold;
+    color: #1a3f6f;
+    line-height: 1.3;
+  }
+  .ai-item .ai-name.startup-name { color: #7a3e00; }
+  .ai-item .ai-desc {
+    font-size: 10.5px;
+    color: #555;
+    line-height: 1.35;
+    margin-top: 1px;
+  }
+  .ai-item .ai-output {
+    font-size: 10px;
+    color: #1a3f6f;
+    margin-top: 3px;
+    font-weight: bold;
+  }
+
+  /* ABDM spine row */
+  .abdm-spine {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px;
+    margin: 6px 0 10px;
+  }
+  .abdm-spine-label {
+    background: #1a3f6f;
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    padding: 6px 4px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .abdm-spine-bar {
+    background: #1a3f6f;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .abdm-spine-bar .spine-title {
+    font-size: 11px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .abdm-spine-bar .spine-components {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .spine-pill {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.5);
+    color: #fff;
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
+  /* Summary bar */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 16px;
+    border-top: 1px solid #ddd;
+    padding-top: 14px;
+  }
+  .summary-col {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px 14px;
+  }
+  .summary-col.asis-sum { border-left: 4px solid #888; background: #f8f8f8; }
+  .summary-col.tobe-sum { border-left: 4px solid #1a3f6f; background: #f0f5ff; }
+  .summary-col .sum-title {
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .summary-col.asis-sum .sum-title { color: #555; }
+  .summary-col.tobe-sum .sum-title { color: #1a3f6f; }
+  .sum-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+  .sum-item {
+    font-size: 10.5px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    line-height: 1.4;
+  }
+  .sum-item.bad  { background: #ffe8e8; color: #7a0000; }
+  .sum-item.good { background: #e0ebff; color: #0a2a6e; }
+  .sum-item i    { margin-right: 4px; }
+
+  /* Section break */
+  .stage-break {
+    height: 4px;
+    background: #eee;
+    border-radius: 2px;
+    margin: 6px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1><i class="fa-solid fa-code-compare" style="margin-right:8px;"></i>As-Is vs. To-Be — AI-Enabled Coordinated Maternal &amp; Newborn Care</h1>
+  <p>Care journey: ANC → Intrapartum → Immediate Postpartum → Neonatal (0–28 days) &nbsp;·&nbsp; Setting A: Connected, AI-enabled, ABDM-integrated</p>
+</div>
+
+<!-- Column headers -->
+<div class="col-headers">
+  <div class="col-hdr stage"></div>
+  <div class="col-hdr asis"><i class="fa-solid fa-circle-xmark" style="margin-right:6px;"></i>As-Is Today</div>
+  <div class="col-hdr gap"></div>
+  <div class="col-hdr tobe"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>To-Be: AI-Enabled Connected Care</div>
+</div>
+
+
+<!-- ══════════════════════════════════
+     STAGE 1: ANTENATAL CARE
+═══════════════════════════════════ -->
+<div class="journey-row">
+
+  <div class="stage-label anc">
+    <i class="fa-solid fa-baby"></i>
+    Antenatal<br>Care
+    <span style="font-size:9px;font-weight:normal;color:#555;">ANC 1–8</span>
+  </div>
+
+  <div class="asis-panel">
+    <div class="panel-title"><i class="fa-solid fa-circle-xmark" style="color:#888;"></i>Current state</div>
+    <ul>
+      <li>BP, weight, fundal height recorded manually on paper MCP card — rarely digitised</li>
+      <li>Gestational age estimated by Naegele's rule (LMP-based) — inaccurate for Indian population, especially with irregular cycles</li>
+      <li>High-risk identification: clinical judgment only, no AI risk scoring</li>
+      <li>ANC dropout: ASHA manually follows up missed visits; no predictive system to flag who is at risk of dropping out</li>
+      <li>Records siloed at the facility visited — if mother goes to a different facility, her history is unavailable</li>
+      <li>Same data re-entered into RCH portal, U-WIN, Poshan Tracker separately</li>
+    </ul>
+    <span class="gap-tag">No AI risk scoring</span>
+    <span class="gap-tag">Siloed records</span>
+    <span class="gap-tag">Triple data entry</span>
+  </div>
+
+  <div class="gap-col">
+    <div class="gap-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+    <div class="gap-label">AI risk<br>scoring +<br>ABHA<br>linkage</div>
+  </div>
+
+  <div class="tobe-panel">
+    <div class="panel-title"><i class="fa-solid fa-circle-check" style="color:#1a3f6f;"></i>AI-enabled state</div>
+    <div class="ai-items">
+      <div class="ai-item">
+        <div class="ai-icon startup"><i class="fa-solid fa-star"></i></div>
+        <div class="ai-content">
+          <div class="ai-name startup-name">ARMMAN / Garbhini-GA2</div>
+          <div class="ai-desc">India-specific AI gestational age model (IIT Madras / GARBH-Ini cohort), more accurate than Naegele for the Indian population. Dropout-risk score identifies mothers likely to miss visits.</div>
+          <div class="ai-output">→ FHIR DiagnosticReport · dropout-risk to ANM dashboard · IVR call auto-scheduled</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">CareNX Fetosense</div>
+          <div class="ai-desc">Portable antenatal kit: BP, Hb, fetal Doppler at household / sub-centre level; AI pre-eclampsia risk stratification from vitals trend</div>
+          <div class="ai-output">→ FHIR Observations (BP, Hb, FHR) · pre-eclampsia alert to ANM</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">AI-Enabled Point-of-Care Ultrasound</div>
+          <div class="ai-desc">Portable POCUS (e.g., Butterfly iQ, Philips Lumify) with AI-guided image acquisition for gestational dating confirmation, placental location, and fetal anomaly screening at sub-centre and CHC level. AI overlay guides non-specialist operators to acceptable image quality.</div>
+          <div class="ai-output">→ FHIR DiagnosticReport (ultrasound findings) · anomaly flag to obstetrician · GA cross-check with Garbhini-GA2</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon abdm"><i class="fa-solid fa-id-card"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">ABHA at first ANC visit</div>
+          <div class="ai-desc">All ANC data from all facilities links to one identity; single capture feeds RCH, U-WIN, Poshan Tracker automatically on sync — eliminates triple entry</div>
+          <div class="ai-output">→ Longitudinal ANC record travels with mother across facilities</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="stage-break"></div>
+
+<!-- ══════════════════════════════════
+     STAGE 2: INTRAPARTUM
+═══════════════════════════════════ -->
+<div class="journey-row">
+
+  <div class="stage-label labor">
+    <i class="fa-solid fa-person-pregnant"></i>
+    Labor &amp;<br>Delivery
+    <span style="font-size:9px;font-weight:normal;color:#777;">Intrapartum</span>
+  </div>
+
+  <div class="asis-panel">
+    <div class="panel-title"><i class="fa-solid fa-circle-xmark" style="color:#888;"></i>Current state</div>
+    <ul>
+      <li>CTG available at district hospitals but interpretation depends on clinician skill — no AI reading; PHCs rely on intermittent auscultation</li>
+      <li>Fetal distress: identified late, often by the time clinical signs appear</li>
+      <li>Partograph: rarely completed correctly; no digital equivalent in most facilities</li>
+      <li>PPH: detected by visual blood loss estimation — notoriously inaccurate, leading to delayed intervention</li>
+      <li>Labor room doctor has no access to the mother's ANC risk record — starts from scratch at admission</li>
+      <li>No structured digital record generated during labor</li>
+    </ul>
+    <span class="gap-tag">No AI CTG reading</span>
+    <span class="gap-tag">PPH detected late</span>
+    <span class="gap-tag">ANC record unavailable in labor</span>
+  </div>
+
+  <div class="gap-col">
+    <div class="gap-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+    <div class="gap-label">AI fetal<br>monitoring +<br>PPH<br>detection</div>
+  </div>
+
+  <div class="tobe-panel">
+    <div class="panel-title"><i class="fa-solid fa-circle-check" style="color:#1a3f6f;"></i>AI-enabled state</div>
+    <div class="ai-items">
+      <div class="ai-item">
+        <div class="ai-icon"><i class="fa-solid fa-wave-square"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">Janitri / DotoCare / Sybil / FetalLite</div>
+          <div class="ai-desc">AI CTG interpretation: automated fetal distress classification (normal / suspicious / pathological). Sensors: abdominal (tocotransducer + ultrasound probe for FHR), arm (automated BP cuff), chest (SpO₂/RR). FetalLite: portable wireless fetal monitor for lower-resource labor wards.</div>
+          <div class="ai-output">→ FHIR Observation (CTG classification) · real-time alert to obstetrician</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon"><i class="fa-solid fa-droplet"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">Gradi / Dozee / Stryker–Titan</div>
+          <div class="ai-desc">Quantified blood loss measurement (Gradi drape) replaces visual estimation; Dozee contactless vitals monitoring detects early PPH deterioration pattern; Stryker–Titan surgical fluid management system for intraoperative PPH control in C-section / operative delivery.</div>
+          <div class="ai-output">→ FHIR Observation (blood loss quantified) · AI early-warning alert to team · intraoperative fluid balance to HMIS</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">Intrapartum AI Ultrasound (fetal presentation + EFW)</div>
+          <div class="ai-desc">Standard ultrasonography + AI assistance at admission: confirms fetal lie and presentation, estimates fetal weight (EFW) before operative delivery, and identifies cord presentation. Reduces clinical examination error before CS decision.</div>
+          <div class="ai-output">→ FHIR DiagnosticReport (presentation, EFW) · confirms or modifies delivery plan</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon abdm"><i class="fa-solid fa-arrows-rotate"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">HIE-CM: ANC record pulled at admission</div>
+          <div class="ai-desc">Labor team pulls mother's ANC risk record (gestational age, pre-eclampsia risk, parity, prior complications) from ABHA via HIE-CM consent — no starting from scratch</div>
+          <div class="ai-output">→ Full ANC context available in labor room within seconds of admission</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="stage-break"></div>
+
+<!-- ══════════════════════════════════
+     STAGE 3: IMMEDIATE POSTPARTUM
+═══════════════════════════════════ -->
+<div class="journey-row">
+
+  <div class="stage-label postpart">
+    <i class="fa-solid fa-bed-pulse"></i>
+    Immediate<br>Postpartum
+    <span style="font-size:9px;font-weight:normal;color:#777;">0–24 hours</span>
+  </div>
+
+  <div class="asis-panel">
+    <div class="panel-title"><i class="fa-solid fa-circle-xmark" style="color:#888;"></i>Current state</div>
+    <ul>
+      <li>Maternal monitoring: manual vitals at intervals — heavy workload means observations missed in the 2-hour danger window post-delivery</li>
+      <li>PPH identification relies on periodic nursing checks; delayed escalation common</li>
+      <li>Newborn: APGAR assessed subjectively; birth weight on beam balance (inaccurate); length rarely measured correctly</li>
+      <li>Child ABHA and birth registration: manual, delayed by days — U-WIN immunization record doesn't exist yet</li>
+      <li>Discharge summary: paper or basic HMIS printout; mother has no digital copy</li>
+      <li>No standard handoff to community ASHA for postnatal follow-up</li>
+    </ul>
+    <span class="gap-tag">Post-delivery vitals gap</span>
+    <span class="gap-tag">No Child ABHA at birth</span>
+    <span class="gap-tag">No discharge handoff</span>
+  </div>
+
+  <div class="gap-col">
+    <div class="gap-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+    <div class="gap-label">Continuous<br>monitoring +<br>birth<br>identity</div>
+  </div>
+
+  <div class="tobe-panel">
+    <div class="panel-title"><i class="fa-solid fa-circle-check" style="color:#1a3f6f;"></i>AI-enabled state</div>
+    <div class="ai-items">
+      <div class="ai-item">
+        <div class="ai-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">Dozee (contactless maternal monitoring)</div>
+          <div class="ai-desc">AI early-warning score from continuous HR, RR, SpO₂ monitoring. Flags deterioration in the 2-hour danger window without nurse intervention; reduces missed PPH escalations.</div>
+          <div class="ai-output">→ FHIR Observation (EWS score) · alert to attending nurse/doctor</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon startup"><i class="fa-solid fa-star"></i></div>
+        <div class="ai-content">
+          <div class="ai-name startup-name">Shishu Maapan</div>
+          <div class="ai-desc">AI birth anthropometry: length and weight estimated from smartphone photo; WHO z-scores computed instantly; replaces inaccurate beam balance + tape measure</div>
+          <div class="ai-output">→ FHIR Observation (birth weight/length, z-score) → Child ABHA</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon abdm"><i class="fa-solid fa-id-card"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">Child ABHA issued at birth + EkaCare discharge PHR</div>
+          <div class="ai-desc">Child ABHA created at birth registration → immediately links to U-WIN (immunization schedule starts); EkaCare generates AI-summarised discharge note → sent to mother's PHR</div>
+          <div class="ai-output">→ Newborn enters U-WIN on day 0 · mother has digital discharge record</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="stage-break"></div>
+
+<!-- ══════════════════════════════════
+     STAGE 4: NEONATAL 0–28 DAYS
+═══════════════════════════════════ -->
+<div class="journey-row">
+
+  <div class="stage-label neonatal">
+    <i class="fa-solid fa-child"></i>
+    Neonatal<br>Care
+    <span style="font-size:9px;font-weight:normal;color:#777;">0–28 days</span>
+  </div>
+
+  <div class="asis-panel">
+    <div class="panel-title"><i class="fa-solid fa-circle-xmark" style="color:#888;"></i>Current state</div>
+    <ul>
+      <li>NICU monitoring: intermittent nursing observations; respiratory distress identified by visible signs — intervention delayed</li>
+      <li>Neonatal sepsis: detected late from clinical signs (poor feeding, lethargy, temperature) — high case fatality at this stage</li>
+      <li>Growth monitoring: manual tape measure + beam balance (frequent errors); WHO z-scores rarely computed</li>
+      <li>Post-discharge: no structured follow-up; ASHA unaware of what happened at the facility; U-WIN vaccination schedule exists but not linked to birth record</li>
+      <li>No longitudinal neonatal record exists at 28 days — data lives in NICU register, Poshan Tracker, and U-WIN separately with no linkage</li>
+    </ul>
+    <span class="gap-tag">No continuous NICU AI monitoring</span>
+    <span class="gap-tag">Late sepsis detection</span>
+    <span class="gap-tag">No 28-day longitudinal record</span>
+  </div>
+
+  <div class="gap-col">
+    <div class="gap-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+    <div class="gap-label">Continuous<br>AI NICU +<br>28-day<br>record</div>
+  </div>
+
+  <div class="tobe-panel">
+    <div class="panel-title"><i class="fa-solid fa-circle-check" style="color:#1a3f6f;"></i>AI-enabled state</div>
+    <div class="ai-items">
+      <div class="ai-item">
+        <div class="ai-icon startup"><i class="fa-solid fa-star"></i></div>
+        <div class="ai-content">
+          <div class="ai-name startup-name">InAccel Saans · Vayu CPAP · Draeger/Syrma Johari BabyFlow 100</div>
+          <div class="ai-desc">Three Gates-supported CPAP solutions covering the full spectrum: <strong>InAccel Saans</strong>: FPGA AI for continuous SpO₂/HR/RR monitoring and CPAP titration (1 nurse per 40–50 babies); <strong>Vayu</strong>: portable bubble CPAP for low-resource NICUs, minimal consumables; <strong>BabyFlow 100</strong> (Draeger/Syrma Johari): high-flow nasal CPAP for district hospitals without CPAP expertise.</div>
+          <div class="ai-output">→ FHIR Observation (respiratory status, CPAP parameters) → Child ABHA · NHCX NICU claim trigger</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon"><i class="fa-solid fa-temperature-half"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">IoT-Enabled Incubator (smart, connected)</div>
+          <div class="ai-desc">Connected incubators (e.g., Draeger Caleo, Comen) with continuous temperature, humidity, SpO₂, and weight monitoring. Bluetooth/Wi-Fi push to HMIS; automated alarms for temperature drift and apnea events; daily weight logged without manual charting.</div>
+          <div class="ai-output">→ FHIR Observation (temp, humidity, weight) · alarm log to nursing station · weight trend in Child ABHA</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon"><i class="fa-solid fa-virus"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">Neonatal Sepsis AI — Dozee (Gates-named)</div>
+          <div class="ai-desc">Dozee contactless monitoring captures continuous HR variability, temperature instability, and RR changes; AI pattern detection flags early sepsis hours before clinical signs (poor feeding, lethargy) appear — triggers antibiotic review at the cot-side</div>
+          <div class="ai-output">→ FHIR Observation (sepsis risk score) · alert to neonatologist</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon startup"><i class="fa-solid fa-star"></i></div>
+        <div class="ai-content">
+          <div class="ai-name startup-name">Shishu Maapan + ARMMAN post-discharge</div>
+          <div class="ai-desc">Serial growth tracking (day 7, 14, 28) via ASHA smartphone; WHO z-scores auto-computed; ARMMAN IVR schedules postnatal danger-sign reminders and vaccine due-dates to mother</div>
+          <div class="ai-output">→ Growth trend in Child ABHA · Poshan Tracker fed automatically · U-WIN vaccine reminders</div>
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon abdm"><i class="fa-solid fa-link"></i></div>
+        <div class="ai-content">
+          <div class="ai-name">Complete 28-day longitudinal record via ABHA</div>
+          <div class="ai-desc">By day 28: one Child ABHA-linked record contains birth anthropometry, NICU events, growth trajectory, vaccinations, and community follow-up — accessible to any authorized provider via HIE-CM consent</div>
+          <div class="ai-output">→ NICU + community + programme data linked in one place for the first time</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ABDM spine -->
+<div class="abdm-spine" style="margin-top:10px;">
+  <div class="abdm-spine-label"><i class="fa-solid fa-shield-halved" style="margin-right:5px;"></i>ABDM<br>Backbone</div>
+  <div class="abdm-spine-bar">
+    <span class="spine-title">Runs across all four stages. Links every AI output to a persistent patient identity; enables consented sharing across providers and programmes.</span>
+    <div class="spine-components">
+      <span class="spine-pill"><i class="fa-solid fa-id-card" style="margin-right:4px;"></i>ABHA / Child ABHA</span>
+      <span class="spine-pill"><i class="fa-solid fa-arrows-rotate" style="margin-right:4px;"></i>HIE-CM</span>
+      <span class="spine-pill"><i class="fa-solid fa-video" style="margin-right:4px;"></i>UHI</span>
+      <span class="spine-pill"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>NHCX</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- Summary bar -->
+<div class="summary-bar">
+
+  <div class="summary-col asis-sum">
+    <div class="sum-title"><i class="fa-solid fa-circle-xmark" style="margin-right:5px;color:#888;"></i>As-Is: Key Gaps</div>
+    <div class="sum-grid">
+      <div class="sum-item bad"><i class="fa-solid fa-ban"></i>No gestational age AI — Naegele inaccurate for India</div>
+      <div class="sum-item bad"><i class="fa-solid fa-ban"></i>ANC dropout not predicted — reactive follow-up only</div>
+      <div class="sum-item bad"><i class="fa-solid fa-ban"></i>Labor room has no ANC history — starts blind</div>
+      <div class="sum-item bad"><i class="fa-solid fa-ban"></i>PPH detected late by visual estimation</div>
+      <div class="sum-item bad"><i class="fa-solid fa-ban"></i>No Child ABHA at birth — U-WIN gap from day 0</div>
+      <div class="sum-item bad"><i class="fa-solid fa-ban"></i>NICU: nurse observation only, no continuous AI monitoring</div>
+      <div class="sum-item bad"><i class="fa-solid fa-ban"></i>Sepsis detected clinically — hours too late</div>
+      <div class="sum-item bad"><i class="fa-solid fa-ban"></i>No 28-day longitudinal record exists anywhere</div>
+    </div>
+  </div>
+
+  <div class="summary-col tobe-sum">
+    <div class="sum-title"><i class="fa-solid fa-circle-check" style="margin-right:5px;color:#1a3f6f;"></i>To-Be: What AI + ABDM Enables</div>
+    <div class="sum-grid">
+      <div class="sum-item good"><i class="fa-solid fa-check"></i>Garbhini-GA2 accurate gestational age from ANC visit 1</div>
+      <div class="sum-item good"><i class="fa-solid fa-check"></i>ARMMAN AI flags dropout risk → proactive IVR outreach</div>
+      <div class="sum-item good"><i class="fa-solid fa-check"></i>ANC risk record pulled to labor room via HIE-CM at admission</div>
+      <div class="sum-item good"><i class="fa-solid fa-check"></i>Gradi + Dozee + Stryker–Titan: quantified blood loss + EWS + intraoperative control</div>
+      <div class="sum-item good"><i class="fa-solid fa-check"></i>Child ABHA at birth → U-WIN vaccination from day 0</div>
+      <div class="sum-item good"><i class="fa-solid fa-check"></i>InAccel Saans / Vayu / BabyFlow 100: full NICU CPAP ecosystem across tiers</div>
+      <div class="sum-item good"><i class="fa-solid fa-check"></i>Dozee sepsis AI triggers intervention hours before clinical signs</div>
+      <div class="sum-item good"><i class="fa-solid fa-check"></i>Complete ANC → NICU → community record at 28 days via ABHA</div>
+    </div>
+  </div>
+
+</div>
+
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     REFERENCE ARCHITECTURE: AS-IS vs TO-BE
+════════════════════════════════════════════════════════════ -->
+
+<div style="margin-top:36px;border-top:2px solid #1a3f6f;padding-top:20px;">
+
+  <div style="margin-bottom:14px;">
+    <div style="font-size:15px;font-weight:bold;color:#1a3f6f;margin-bottom:4px;">
+      <i class="fa-solid fa-layer-group" style="margin-right:8px;"></i>Reference Architecture — As-Is vs. To-Be
+    </div>
+    <div style="font-size:11px;color:#555;">System layers · same care context · how each layer changes when AI and ABDM are introduced</div>
+  </div>
+
+  <!-- Arch column headers -->
+  <div style="display:grid;grid-template-columns:110px 1fr 24px 1fr;gap:6px;margin-bottom:6px;">
+    <div></div>
+    <div style="background:#6b6b6b;color:#fff;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.4px;padding:7px 10px;text-align:center;border-radius:3px;">
+      <i class="fa-solid fa-circle-xmark" style="margin-right:6px;"></i>As-Is
+    </div>
+    <div></div>
+    <div style="background:#1a3f6f;color:#fff;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.4px;padding:7px 10px;text-align:center;border-radius:3px;">
+      <i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>To-Be
+    </div>
+  </div>
+
+  <!-- ── LAYER 1: CAPTURE ── -->
+  <div style="display:grid;grid-template-columns:110px 1fr 24px 1fr;gap:6px;margin-bottom:5px;align-items:stretch;">
+    <div style="background:#eaf0fb;border:1.5px solid #b0c8ee;color:#1a3f6f;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 4px;border-radius:4px;gap:5px;">
+      <i class="fa-solid fa-microchip" style="font-size:16px;"></i>1. Capture
+    </div>
+    <div style="background:#f5f5f5;border:1px solid #ccc;border-left:4px solid #888;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:10px;font-weight:bold;color:#666;text-transform:uppercase;margin-bottom:6px;"><i class="fa-solid fa-stethoscope" style="margin-right:4px;"></i>Devices &amp; data capture</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+        <span style="background:#e8e8e8;border:1px solid #bbb;color:#444;padding:4px 8px;font-size:11px;border-radius:3px;">BP meter (manual)</span>
+        <span style="background:#e8e8e8;border:1px solid #bbb;color:#444;padding:4px 8px;font-size:11px;border-radius:3px;">Hb strip (manual)</span>
+        <span style="background:#e8e8e8;border:1px solid #bbb;color:#444;padding:4px 8px;font-size:11px;border-radius:3px;">Beam balance (weight)</span>
+        <span style="background:#e8e8e8;border:1px solid #bbb;color:#444;padding:4px 8px;font-size:11px;border-radius:3px;">MUAC tape</span>
+        <span style="background:#e8e8e8;border:1px solid #bbb;color:#444;padding:4px 8px;font-size:11px;border-radius:3px;">CTG (manual read)</span>
+        <span style="background:#e8e8e8;border:1px solid #bbb;color:#444;padding:4px 8px;font-size:11px;border-radius:3px;">Paper MCP card</span>
+      </div>
+      <div style="font-size:10.5px;color:#666;line-height:1.5;">Data captured on paper or typed into siloed HMIS. No structured output. No device interoperability. Readings vary by observer skill.</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;color:#1a3f6f;font-size:16px;">→</div>
+    <div style="background:#f0f5ff;border:1px solid #b0c8ee;border-left:4px solid #1a3f6f;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:10px;font-weight:bold;color:#1a3f6f;text-transform:uppercase;margin-bottom:6px;"><i class="fa-solid fa-microchip" style="margin-right:4px;"></i>AI-enabled device layer</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">CareNX (BLE fetal Doppler, BP, Hb)</span>
+        <span style="background:#fff3e0;border:1.5px solid #e08000;color:#7a3e00;padding:4px 8px;font-size:11px;border-radius:3px;font-weight:bold;">★ Shishu Maapan (AI anthropometry)</span>
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">AI-enabled POCUS (Butterfly iQ / Lumify)</span>
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">Janitri / DotoCare / Sybil (AI CTG)</span>
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">FetalLite (portable fetal monitor)</span>
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">Dozee (contactless vitals)</span>
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">Gradi (quantified blood loss)</span>
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">Stryker–Titan (PPH / surgical)</span>
+        <span style="background:#fff3e0;border:1.5px solid #e08000;color:#7a3e00;padding:4px 8px;font-size:11px;border-radius:3px;font-weight:bold;">★ InAccel Saans (NICU AI)</span>
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">Vayu CPAP</span>
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">BabyFlow 100 (Draeger/Syrma Johari)</span>
+        <span style="background:#e0ebff;border:1px solid #2261B0;color:#1a3f6f;padding:4px 8px;font-size:11px;border-radius:3px;">IoT Incubator (Draeger Caleo / Comen)</span>
+      </div>
+      <div style="font-size:10.5px;color:#1a3f6f;line-height:1.5;">Each device outputs structured data (BLE → MQTT); mapped to <strong>FHIR Observation</strong> with LOINC code at the edge. No manual transcription.</div>
+    </div>
+  </div>
+
+  <!-- ── LAYER 2: EDGE & DIGITISATION ── -->
+  <div style="display:grid;grid-template-columns:110px 1fr 24px 1fr;gap:6px;margin-bottom:5px;align-items:stretch;">
+    <div style="background:#eaf0fb;border:1.5px solid #b0c8ee;color:#1a3f6f;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 4px;border-radius:4px;gap:5px;">
+      <i class="fa-solid fa-server" style="font-size:16px;"></i>2. Edge &amp; Digitisation
+    </div>
+    <div style="background:#f5f5f5;border:1px solid #ccc;border-left:4px solid #888;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:10px;font-weight:bold;color:#666;text-transform:uppercase;margin-bottom:6px;"><i class="fa-solid fa-circle-xmark" style="color:#888;margin-right:4px;"></i>Siloed, manual digitisation</div>
+      <div style="font-size:11px;color:#444;line-height:1.6;">
+        · HMIS entry by data entry operator — delayed, error-prone<br>
+        · No standard data format — each system uses its own schema<br>
+        · ANC records in facility HMIS; labour notes in paper register; NICU in separate logbook<br>
+        · <span style="background:#ffe0e0;color:#8b0000;padding:1px 5px;border-radius:2px;font-size:10.5px;">Triple re-entry</span> into RCH portal, U-WIN, Poshan Tracker per visit
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;color:#1a3f6f;font-size:16px;">→</div>
+    <div style="background:#f0f5ff;border:1px solid #b0c8ee;border-left:4px solid #1a3f6f;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:10px;font-weight:bold;color:#1a3f6f;text-transform:uppercase;margin-bottom:6px;"><i class="fa-solid fa-circle-check" style="margin-right:4px;"></i>FHIR-native, single-capture</div>
+      <div style="font-size:11px;color:#333;line-height:1.6;">
+        · Device gateway normalises all payloads → <strong>FHIR R4 Observation</strong> (LOINC coded) at the edge<br>
+        · HMIS acts as <strong>HIP</strong>: assembles ANC encounter, intrapartum events, birth summary as FHIR bundle<br>
+        · <span style="background:#e0ebff;color:#1a3f6f;padding:1px 5px;border-radius:2px;font-size:10.5px;font-weight:bold;">Single capture → RCH + U-WIN + Poshan Tracker</span> automatically via ABDM sync<br>
+        · <strong>EkaCare / Eka Doc</strong>: AI/NLP converts clinical notes to structured FHIR at front desk
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LAYER 3: CLINICAL / AI ── -->
+  <div style="display:grid;grid-template-columns:110px 1fr 24px 1fr;gap:6px;margin-bottom:5px;align-items:stretch;">
+    <div style="background:#eaf0fb;border:1.5px solid #b0c8ee;color:#1a3f6f;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 4px;border-radius:4px;gap:5px;">
+      <i class="fa-solid fa-brain" style="font-size:16px;"></i>3. Clinical &amp; AI
+    </div>
+    <div style="background:#f5f5f5;border:1px solid #ccc;border-left:4px solid #888;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:10px;font-weight:bold;color:#666;text-transform:uppercase;margin-bottom:6px;"><i class="fa-solid fa-circle-xmark" style="color:#888;margin-right:4px;"></i>Clinical judgment only — no AI</div>
+      <div style="font-size:11px;color:#444;line-height:1.6;">
+        · Risk identification: subjective — depends on individual clinician's experience<br>
+        · Gestational age: Naegele's rule (inaccurate for Indian population with irregular cycles)<br>
+        · No AI CTG interpretation — fetal distress identified late<br>
+        · No early-warning score for maternal deterioration or sepsis<br>
+        · No predictive model for ANC dropout or high-risk escalation<br>
+        · Clinical decision support: absent
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;color:#1a3f6f;font-size:16px;">→</div>
+    <div style="background:#f0f5ff;border:1px solid #b0c8ee;border-left:4px solid #1a3f6f;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:10px;font-weight:bold;color:#1a3f6f;text-transform:uppercase;margin-bottom:6px;"><i class="fa-solid fa-circle-check" style="margin-right:4px;"></i>AI risk models + human-in-loop sign-off</div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;">
+        <div style="font-size:11px;background:#fff;border:1px solid #c8d8f0;padding:4px 8px;border-radius:3px;color:#333;line-height:1.4;">
+          <span style="color:#7a3e00;font-weight:bold;">★ ARMMAN / Garbhini-GA2</span>: India-specific gestational age AI; dropout-risk prediction → IVR auto-scheduled
+        </div>
+        <div style="font-size:11px;background:#fff;border:1px solid #c8d8f0;padding:4px 8px;border-radius:3px;color:#333;line-height:1.4;">
+          <span style="color:#1a3f6f;font-weight:bold;">Janitri / DotoCare / Sybil / FetalLite</span>: AI CTG classification (normal / suspicious / pathological) + maternal EWS; FetalLite for lower-resource labor wards
+        </div>
+        <div style="font-size:11px;background:#fff;border:1px solid #c8d8f0;padding:4px 8px;border-radius:3px;color:#333;line-height:1.4;">
+          <span style="color:#1a3f6f;font-weight:bold;">Gradi + Dozee + Stryker–Titan</span>: quantified PPH (Gradi drape), contactless deterioration EWS (Dozee), intraoperative fluid/surgical PPH management (Stryker–Titan)
+        </div>
+        <div style="font-size:11px;background:#fff;border:1px solid #c8d8f0;padding:4px 8px;border-radius:3px;color:#333;line-height:1.4;">
+          <span style="color:#7a3e00;font-weight:bold;">★ InAccel Saans</span> + <span style="color:#1a3f6f;font-weight:bold;">Vayu CPAP</span> + <span style="color:#1a3f6f;font-weight:bold;">BabyFlow 100</span>: full CPAP ecosystem: AI-monitored NICU (Saans), portable low-resource CPAP (Vayu), high-flow district hospital CPAP (BabyFlow); IoT incubators; Dozee neonatal sepsis AI
+        </div>
+      </div>
+      <div style="font-size:10.5px;color:#1a3f6f;"><strong>All AI outputs:</strong> FHIR DiagnosticReport · clinician/ANM signs off before action · model + version recorded as provenance</div>
+    </div>
+  </div>
+
+  <!-- ── LAYER 4: ABDM PLATFORM ── -->
+  <div style="display:grid;grid-template-columns:110px 1fr 24px 1fr;gap:6px;margin-bottom:5px;align-items:stretch;">
+    <div style="background:#1a3f6f;color:#fff;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 4px;border-radius:4px;gap:5px;">
+      <i class="fa-solid fa-shield-halved" style="font-size:16px;"></i>4. ABDM Platform
+    </div>
+    <div style="background:#f5f5f5;border:1px solid #ccc;border-left:4px solid #888;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:10px;font-weight:bold;color:#666;text-transform:uppercase;margin-bottom:6px;"><i class="fa-solid fa-circle-xmark" style="color:#888;margin-right:4px;"></i>No shared identity or consent layer</div>
+      <div style="font-size:11px;color:#444;line-height:1.6;">
+        · No common patient ID — each system (HMIS, U-WIN, Poshan, ARMMAN) uses its own local ID<br>
+        · No consent mechanism — patient has no control over who accesses her records<br>
+        · No interoperability — AI outputs from individual apps cannot be shared across providers<br>
+        · Records don't travel with the patient; referral means starting over<br>
+        · Maternity claims: submitted separately to each insurer portal (manual, 4–7 day turnaround)<br>
+        · <span style="background:#ffe0e0;color:#8b0000;padding:1px 5px;border-radius:2px;font-size:10.5px;">No longitudinal record exists</span> — no single place to see the full mother-baby journey
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;color:#1a3f6f;font-size:16px;">→</div>
+    <div style="background:#1a3f6f;border:2px solid #1a3f6f;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:11px;font-weight:bold;color:#fff;margin-bottom:8px;"><i class="fa-solid fa-shield-halved" style="margin-right:5px;"></i>ABDM Platform — NHA Digital Public Infrastructure</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);padding:8px 10px;border-radius:3px;">
+          <div style="font-size:11px;font-weight:bold;color:#fff;margin-bottom:3px;"><i class="fa-solid fa-id-card" style="margin-right:4px;"></i>ABHA / Child ABHA</div>
+          <div style="font-size:10.5px;color:rgba(255,255,255,0.85);line-height:1.4;">Persistent ID links every AI output, device reading, and clinical note to the same mother and child across all providers and programmes</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);padding:8px 10px;border-radius:3px;">
+          <div style="font-size:11px;font-weight:bold;color:#fff;margin-bottom:3px;"><i class="fa-solid fa-arrows-rotate" style="margin-right:4px;"></i>HIE-CM</div>
+          <div style="font-size:10.5px;color:rgba(255,255,255,0.85);line-height:1.4;">Patient-controlled consent artefact · encrypted FHIR bundle transfer HIP ↔ HIU · AI risk scores travel with the patient to any authorized provider</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <span style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:bold;"><i class="fa-solid fa-video" style="margin-right:4px;"></i>UHI</span>
+        <span style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:bold;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>NHCX</span>
+        <span style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:bold;"><i class="fa-solid fa-building-columns" style="margin-right:4px;"></i>HFR / HPR</span>
+        <span style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:bold;"><i class="fa-solid fa-star" style="margin-right:4px;color:#FFB552;"></i>EkaCare PHR</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LAYER 5: PROGRAMMES & FEEDBACK ── -->
+  <div style="display:grid;grid-template-columns:110px 1fr 24px 1fr;gap:6px;margin-bottom:5px;align-items:stretch;">
+    <div style="background:#eaf0fb;border:1.5px solid #b0c8ee;color:#1a3f6f;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 4px;border-radius:4px;gap:5px;">
+      <i class="fa-solid fa-arrow-right-arrow-left" style="font-size:16px;"></i>5. Programmes &amp; Feedback
+    </div>
+    <div style="background:#f5f5f5;border:1px solid #ccc;border-left:4px solid #888;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:10px;font-weight:bold;color:#666;text-transform:uppercase;margin-bottom:6px;"><i class="fa-solid fa-circle-xmark" style="color:#888;margin-right:4px;"></i>Fragmented, no feedback loop</div>
+      <div style="font-size:11px;color:#444;line-height:1.6;">
+        · RCH portal, U-WIN, Poshan Tracker: separate systems, no linkage, no shared patient ID<br>
+        · ANM/ASHA: no AI-generated recall lists — manual review of registers to identify overdue visits<br>
+        · Mother: no digital record, no visibility into her own care data<br>
+        · After discharge: community ASHA is unaware of what happened at the facility<br>
+        · At 28 days: no single longitudinal record — data scattered across 4–5 registers and apps
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;color:#1a3f6f;font-size:16px;">→</div>
+    <div style="background:#f0f5ff;border:1px solid #b0c8ee;border-left:4px solid #1a3f6f;padding:10px 12px;border-radius:3px;">
+      <div style="font-size:10px;font-weight:bold;color:#1a3f6f;text-transform:uppercase;margin-bottom:6px;"><i class="fa-solid fa-circle-check" style="margin-right:4px;"></i>Connected, AI-routed feedback</div>
+      <div style="font-size:11px;color:#333;line-height:1.6;">
+        · <strong>Single FHIR push</strong> → RCH portal + U-WIN + Poshan Tracker simultaneously — no re-entry<br>
+        · <strong>ANM / ASHA</strong>: AI-generated recall lists (ARMMAN dropout scores); high-risk flag routed automatically<br>
+        · <strong>Mother</strong>: EkaCare PHR delivers AI-summarised discharge note, vaccine reminders, growth alerts<br>
+        · <strong>Post-discharge</strong>: ARMMAN IVR postnatal programme; Shishu Maapan growth at day 7/14/28<br>
+        · <strong>At 28 days</strong>: complete <span style="background:#e0ebff;color:#1a3f6f;padding:1px 5px;border-radius:2px;font-size:10.5px;font-weight:bold;">ANC → intrapartum → NICU → community record</span> linked in Child ABHA — first time this exists
+      </div>
+    </div>
+  </div>
+
+</div><!-- end arch section -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     HEALTH IMPACT: INTERVENTION → DATA FLOW → EXPECTED OUTCOME
+════════════════════════════════════════════════════════════ -->
+
+<div style="margin-top:36px;border-top:2px solid #1a5c1a;padding-top:20px;">
+
+  <div style="margin-bottom:14px;">
+    <div style="font-size:15px;font-weight:bold;color:#1a5c1a;margin-bottom:4px;">
+      <i class="fa-solid fa-chart-line" style="margin-right:8px;"></i>Intervention → Data Flow → Expected Health Impact
+    </div>
+    <div style="font-size:11px;color:#555;">Each AI intervention closes a specific gap in the current care pathway. Impact estimates are drawn from published pilots and clinical evidence.</div>
+  </div>
+
+  <table style="width:100%;border-collapse:collapse;font-size:10.5px;line-height:1.45;">
+    <thead>
+      <tr>
+        <th style="background:#1a3f6f;color:#fff;padding:7px 10px;text-align:left;width:72px;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;">Stage</th>
+        <th style="background:#1a3f6f;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;">Intervention</th>
+        <th style="background:#1a3f6f;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;">As-Is Gap Closed</th>
+        <th style="background:#1a3f6f;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;">Data Flow</th>
+        <th style="background:#1a3f6f;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.3px;">Expected Health Impact</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- ANC -->
+      <tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;color:#1a3f6f;font-weight:bold;font-size:10px;vertical-align:top;">ANC</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;">Garbhini-GA2 (AI gestational age)</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;">Naegele rule inaccurate for Indian population; ~30% women have irregular LMP</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;">FHIR DiagnosticReport → HMIS → ABHA</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">Mean GA error reduced from ~9 days to ~3 days</span>; corrects preterm classification for ~30% of cohort (GARBH-Ini, 2024)</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;color:#1a3f6f;font-weight:bold;font-size:10px;vertical-align:top;">ANC</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;">ARMMAN mMitra (dropout prediction + IVR)</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;">Reactive ASHA follow-up; high ANC dropout at visits 4–8; high-risk cases missed</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;">Risk score → ANM dashboard → automated IVR outreach</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">15–20% improvement in ANC completion</span> in ARMMAN RCT cohorts; earlier identification of high-risk pregnancies</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;color:#1a3f6f;font-weight:bold;font-size:10px;vertical-align:top;">ANC</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;">AI-enabled POCUS (point-of-care ultrasound)</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;">Ultrasound confined to district hospitals; non-specialists lack image acquisition skill</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;">FHIR DiagnosticReport → ABHA · anomaly flag to specialist</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #d0e0ff;background:#eaf0fb;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">Earlier detection of placenta praevia, malpresentation, anomalies</span>; task-shifts ultrasound to CHC/sub-centre level</td>
+      </tr>
+
+      <!-- Labor -->
+      <tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;color:#7a3200;font-weight:bold;font-size:10px;vertical-align:top;">Labor</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;vertical-align:top;">Janitri / DotoCare / Sybil / FetalLite (AI CTG)</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;vertical-align:top;">CTG read by variable-skill clinicians; fetal distress identified late from clinical signs</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;vertical-align:top;">FHIR Observation (CTG classification) → real-time obstetrician alert</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">Faster time-to-intervention for pathological CTG</span>; lower intrapartum stillbirth and HIE rates (Janitri UP pilot, 2023)</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;color:#7a3200;font-weight:bold;font-size:10px;vertical-align:top;">Labor</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;vertical-align:top;">Gradi + Dozee + Stryker–Titan (PPH detection)</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;vertical-align:top;">Visual blood loss estimation underestimates PPH by 33–50%; delayed uterotonic intervention</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;vertical-align:top;">FHIR Observation (quantified blood loss, EWS) → escalation alert</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0d8c0;background:#fdf0e8;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">PPH detection 15–30 min earlier</span>; PPH accounts for 25–30% of maternal deaths in India; quantified loss reduces both under- and over-treatment</td>
+      </tr>
+
+      <!-- Postpartum -->
+      <tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;color:#7a1a2e;font-weight:bold;font-size:10px;vertical-align:top;">Postpartum</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;vertical-align:top;">Dozee (contactless maternal monitoring)</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;vertical-align:top;">Post-delivery vitals checked at intervals; 2-hour danger window frequently missed in understaffed wards</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;vertical-align:top;">Continuous FHIR Observation (EWS score) → nurse alert</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">Continuous surveillance without added nursing workload</span>; reduces missed secondary PPH and eclampsia in the highest-risk window</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;color:#7a1a2e;font-weight:bold;font-size:10px;vertical-align:top;">Postpartum</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;vertical-align:top;">Shishu Maapan (AI birth anthropometry)</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;vertical-align:top;">Beam balance + tape measure errors frequent; WHO z-scores rarely computed at birth</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;vertical-align:top;">FHIR Observation (weight, length, z-score) → Child ABHA</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0c0d0;background:#fde8ee;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">Accurate LBW identification at birth</span>; LBW triggers KMC and NICU referral pathway; prevents missed wasting at discharge</td>
+      </tr>
+
+      <!-- Neonatal -->
+      <tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;color:#1a5c1a;font-weight:bold;font-size:10px;vertical-align:top;">Neonatal</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;vertical-align:top;">InAccel Saans / Vayu / BabyFlow 100 (CPAP)</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;vertical-align:top;">RDS: delayed CPAP due to device/skill shortage; standard nurse-to-baby ratio unsustainable in public NICUs</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;vertical-align:top;">FHIR Observation (SpO₂, CPAP params) → Child ABHA · NHCX claim trigger</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">CPAP reduces neonatal RDS mortality by 30–50%</span> vs no CPAP; AI titration (Saans) supports 1 nurse per 40–50 babies vs standard 1:4</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;color:#1a5c1a;font-weight:bold;font-size:10px;vertical-align:top;">Neonatal</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;vertical-align:top;">IoT-Enabled Incubator (smart, connected)</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;vertical-align:top;">Temperature drift in basic incubators undetected; manual parameter charting with gaps</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;vertical-align:top;">FHIR Observation (temp, humidity, weight) · alarm log to nursing station</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #c0e0c0;background:#e8f5e8;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">Prevents hypothermia-related deaths</span>; hypothermia on admission is associated with 2–3x higher neonatal mortality risk in preterm infants</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 10px;border-bottom:none;background:#e8f5e8;color:#1a5c1a;font-weight:bold;font-size:10px;vertical-align:top;">Neonatal</td>
+        <td style="padding:6px 10px;border-bottom:none;background:#e8f5e8;vertical-align:top;">Dozee (neonatal sepsis AI)</td>
+        <td style="padding:6px 10px;border-bottom:none;background:#e8f5e8;vertical-align:top;">Sepsis detected from clinical signs (poor feeding, lethargy) — typically 12–24h after onset</td>
+        <td style="padding:6px 10px;border-bottom:none;background:#e8f5e8;vertical-align:top;">FHIR Observation (sepsis risk score) → neonatologist alert</td>
+        <td style="padding:6px 10px;border-bottom:none;background:#e8f5e8;vertical-align:top;"><span style="color:#1a5c1a;font-weight:bold;">Early sepsis flag 6–12h before clinical signs</span>; neonatal sepsis case fatality drops from 20–30% to under 10% with early antibiotic initiation</td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+
+<p style="font-size:9px;color:#999;margin-top:20px;border-top:1px solid #eee;padding-top:8px;">
+  Kalpa Impact · Gates Healthcare · AI-Enabled Coordinated Care · June 2026 &nbsp;·&nbsp;
+  Sources: ABDM FHIR IG v6.5, NHA, NITI Frontier Tech, ARMMAN/GARBH-Ini, PIB Feb 2026, IJRASET 2026
+</p>
+
+</body>
+</html>

@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI-Enabled MNH Care — Visual Summary</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; font-size: 12px; color: #222; background: #f4f6fa; }
+
+/* ── Nav ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: #1a3f6f; display: flex; align-items: center;
+  border-bottom: 2px solid #0f2a4f;
+}
+.nav-brand { color: #fff; font-size: 11px; font-weight: bold; padding: 11px 18px; border-right: 1px solid rgba(255,255,255,0.15); white-space: nowrap; }
+nav a { color: rgba(255,255,255,0.72); text-decoration: none; padding: 11px 16px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255,255,255,0.12); transition: background 0.15s; white-space: nowrap; }
+nav a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+/* ── Section shell ── */
+.sw { padding: 36px 40px 52px; max-width: 1180px; margin: 0 auto; }
+.sec-title { font-size: 15px; font-weight: bold; color: #1a3f6f; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.sec-sub { font-size: 11px; color: #666; margin-bottom: 20px; }
+section + section { border-top: 3px solid #dde3f0; }
+
+/* ── Deployment status badges ── */
+.sb { display:inline-block; padding:2px 6px; border-radius:3px; font-size:8px; font-weight:bold; vertical-align:middle; margin-left:5px; white-space:nowrap; letter-spacing:0.3px; }
+.sb-scale { background:#d4edda; color:#155724; border:1px solid #b8dfc4; }
+.sb-pilot { background:#cce5ff; color:#004085; border:1px solid #9dcffc; }
+.sb-eval  { background:#fff3cd; color:#856404; border:1px solid #ffe69c; }
+.sb-prop  { background:#f1f3f5; color:#495057; border:1px solid #ced4da; }
+
+/* ── Reading guide / key ── */
+.reading-guide {
+  background: #fff; border: 1.5px solid #c8d8f0;
+  border-left: 5px solid #1a3f6f;
+  border-radius: 4px; padding: 16px 20px;
+  margin-bottom: 28px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.rg-col-title { font-size: 10px; font-weight: bold; color: #1a3f6f; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; }
+.rg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 11px; color: #444; }
+.rg-row .rg-label { font-weight: bold; min-width: 110px; }
+
+/* ── SECTION 1: Coverage map ── */
+.cov-table { width: 100%; border-collapse: collapse; }
+.cov-table th { background: #1a3f6f; color: #fff; padding: 8px 12px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; text-align: center; }
+.cov-table th.tool-hdr { text-align: left; width: 235px; }
+.cov-table th.gap-hdr  { text-align: left; }
+.cov-table td { padding: 5px 12px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 11px; }
+.cov-table tr:hover td { background: #f0f5ff; }
+.cov-table td.sc { text-align: center; }
+.cov-table td.tc { display: flex; align-items: center; gap: 0; }
+
+/* Coverage dots */
+.dot { display: inline-block; width: 13px; height: 13px; border-radius: 50%; }
+.d-sys   { background: #1a3f6f; }
+.d-start { background: #e08000; }
+.d-abdm  { background: #fff; border: 3px solid #1a3f6f; }
+.d-none  { background: #e8e8e8; border: 1px solid #ccc; }
+
+/* Coverage stage cell with text label */
+.stage-cell-inner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.stage-cell-inner .dot { margin: 0 auto; }
+.stage-cell-inner .dot-lbl { font-size: 8px; color: #888; max-width: 60px; text-align: center; line-height: 1.2; }
+
+.badge-start { background: #fff3e0; color: #7a3e00; border: 1px solid #e08000; padding: 1px 6px; border-radius: 10px; font-size: 9px; font-weight: bold; white-space: nowrap; }
+.badge-abdm  { background: #eaf0fb; color: #1a3f6f; border: 1px solid #8aaddd; padding: 1px 6px; border-radius: 10px; font-size: 9px; font-weight: bold; white-space: nowrap; }
+.cov-table tbody tr.abdm-row td { background: #f2f6fc; }
+.caveat { font-size: 9px; color: #888; font-style: italic; }
+
+/* ── SECTION 2: Swimlane ── */
+.swimlane-scroll { overflow-x: auto; }
+.swimlane {
+  display: grid;
+  grid-template-columns: 80px repeat(4, 1fr);
+  min-width: 860px;
+  border: 1px solid #c0cfe8; border-radius: 6px; overflow: hidden;
+}
+.sl-corner { background: #1a3f6f; display:flex; align-items:center; justify-content:center; padding:10px; }
+.sl-stage-hdr { background: #1a3f6f; color: #fff; text-align: center; padding: 10px 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; border-left: 1px solid rgba(255,255,255,0.18); display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.sl-stage-hdr i { font-size: 18px; }
+.sl-stage-hdr .sub { font-size: 9px; font-weight: normal; opacity: 0.72; }
+.sl-row-label { display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.4; writing-mode: vertical-rl; }
+.sl-row-label.asis { background: #6b6b6b; color: #fff; }
+.sl-row-label.tobe { background: #1a3f6f; color: #fff; }
+.sl-row-label.abdm { background: #0f2a4f; color: rgba(255,255,255,0.85); font-size: 9px; }
+.sl-cell { padding: 10px 10px; border-left: 1px solid #dce8f8; display: flex; flex-direction: column; gap: 5px; }
+.sl-cell.asis-c { background: #f5f5f5; border-top: 1px solid #ddd; }
+.sl-cell.tobe-c { background: #f0f5ff; border-top: 1px solid #c8d8f0; }
+.sl-cell.abdm-c { background: #1a3f6f; border-top: 1px solid #0f2a4f; flex-direction: row; flex-wrap: wrap; align-items: flex-start; padding: 8px 10px; }
+
+/* Gap chips */
+.gap-chip { display: inline-flex; align-items: center; gap: 4px; background: #ffe0e0; color: #8b0000; border: 1px solid #e0a0a0; border-radius: 3px; padding: 3px 7px; font-size: 9.5px; font-weight: bold; }
+
+/* Tool nodes */
+.tool-node { background: #fff; border: 1px solid #c0d0e8; border-left: 3px solid #1a3f6f; border-radius: 3px; padding: 5px 7px; display: flex; align-items: flex-start; gap: 6px; }
+.tool-node.start { border-left-color: #e08000; }
+.tn-icon { width: 20px; height: 20px; min-width: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 10px; background: #1a3f6f; color: #fff; flex-shrink: 0; }
+.tool-node.start .tn-icon { background: #e08000; }
+.tn-name { font-size: 10px; font-weight: bold; color: #1a3f6f; line-height: 1.3; }
+.tool-node.start .tn-name { color: #7a3e00; }
+.tn-out { font-size: 9px; color: #666; margin-top: 2px; line-height: 1.3; }
+
+/* ABDM pills — current vs target */
+.abdm-pill { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.5); color: #fff; padding: 3px 8px; border-radius: 10px; font-size: 9px; font-weight: bold; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.abdm-pill.target { background: rgba(255,255,255,0.06); border-style: dashed; color: rgba(255,255,255,0.6); font-weight: normal; }
+.abdm-lbl { font-size: 8.5px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.3px; font-weight: bold; width: 100%; margin-bottom: 4px; }
+
+/* ── SECTION 3: Architecture ── */
+.arch-grid { display: flex; flex-direction: column; gap: 5px; }
+.arch-row { display: grid; grid-template-columns: 100px 1fr 24px 1fr; gap: 5px; align-items: stretch; }
+.arch-layer-lbl { background: #eaf0fb; border: 1.5px solid #b0c8ee; color: #1a3f6f; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8px 4px; border-radius: 4px; gap: 5px; }
+.arch-layer-lbl i { font-size: 16px; }
+.arch-layer-lbl.abdm-lbl { background: #1a3f6f; color: #fff; border-color: #1a3f6f; }
+.arch-cell { padding: 10px 12px; border-radius: 3px; }
+.arch-cell.asis { background: #f5f5f5; border: 1px solid #ccc; border-left: 4px solid #888; }
+.arch-cell.tobe { background: #f0f5ff; border: 1px solid #b0c8ee; border-left: 4px solid #1a3f6f; }
+.arch-cell.tobe.abdm-tc { background: #1a3f6f; border-color: #1a3f6f; }
+.cell-hdr { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+.arch-cell.asis .cell-hdr { color: #666; }
+.arch-cell.tobe .cell-hdr { color: #1a3f6f; }
+.arch-cell.abdm-tc .cell-hdr { color: #fff; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { padding: 4px 8px; font-size: 10.5px; border-radius: 3px; }
+.chip.grey   { background: #e8e8e8; border: 1px solid #bbb; color: #444; }
+.chip.blue   { background: #e0ebff; border: 1px solid #2261B0; color: #1a3f6f; }
+.chip.green  { background: #e0f0e0; border: 1px solid #90c890; color: #1a5c1a; font-weight: bold; }
+.chip.red    { background: #ffe0e0; border: 1px solid #e0a0a0; color: #8b0000; }
+.chip.orange { background: #fff3e0; border: 1.5px solid #e08000; color: #7a3e00; font-weight: bold; }
+.chip.abdm-c { background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.42); color: #fff; font-weight: bold; }
+.arch-arrow  { display: flex; align-items: center; justify-content: center; color: #1a3f6f; font-size: 16px; }
+
+/* ── SECTION 4: Health Impact ── */
+.impact-table { width: 100%; border-collapse: collapse; font-size: 10.5px; line-height: 1.45; }
+.impact-table th { background: #1a3f6f; color: #fff; padding: 7px 10px; text-align: left; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
+.impact-table td { padding: 6px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+.impact-table tr:hover td { background: rgba(0,0,0,0.02); }
+.st { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 9px; font-weight: bold; white-space: nowrap; }
+.st.anc      { background: #eaf0fb; color: #1a3f6f; }
+.st.labor    { background: #fdf0e8; color: #7a3200; }
+.st.postpart { background: #fde8ee; color: #7a1a2e; }
+.st.neonatal { background: #e8f5e8; color: #1a5c1a; }
+.iv { color: #1a5c1a; font-weight: bold; }
+.qual { color: #856404; font-style: italic; font-size: 10px; }
+sup.cit { font-size: 8px; color: #1a3f6f; font-weight: bold; vertical-align: super; }
+
+/* Footnotes */
+.footnotes { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 14px 18px; margin-top: 24px; }
+.footnotes .fn-title { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; color: #555; margin-bottom: 10px; }
+.footnotes ol { padding-left: 18px; }
+.footnotes ol li { font-size: 10px; color: #555; line-height: 1.5; margin-bottom: 4px; }
+
+/* Footer */
+.footer { font-size: 9px; color: #999; margin: 0 40px 24px; padding-top: 10px; border-top: 1px solid #ddd; max-width: 1180px; }
+</style>
+</head>
+<body>
+
+<!-- ── Sticky nav ── -->
+<nav>
+  <span class="nav-brand"><i class="fa-solid fa-heart-pulse" style="margin-right:7px;"></i>AI-Enabled MNH Care</span>
+  <a href="#coverage"><i class="fa-solid fa-table-cells" style="margin-right:5px;"></i>Coverage Map</a>
+  <a href="#journey"><i class="fa-solid fa-route" style="margin-right:5px;"></i>Care Journey</a>
+  <a href="#architecture"><i class="fa-solid fa-layer-group" style="margin-right:5px;"></i>Architecture</a>
+  <a href="#impact"><i class="fa-solid fa-chart-line" style="margin-right:5px;"></i>Health Impact</a>
+</nav>
+
+
+<!-- ══════════════════════════════════════════
+     READING GUIDE — shown once, used everywhere
+══════════════════════════════════════════ -->
+<div class="sw" style="padding-bottom:0;">
+<div class="reading-guide">
+  <div>
+    <div class="rg-col-title"><i class="fa-solid fa-circle-info" style="margin-right:5px;"></i>Deployment status — what each badge means</div>
+    <div class="rg-row"><span class="sb sb-scale">AT SCALE</span><span>Deployed with documented outcomes; >10,000 patients reached</span></div>
+    <div class="rg-row"><span class="sb sb-pilot">PILOT</span><span>Active deployment in select facilities; data being collected</span></div>
+    <div class="rg-row"><span class="sb sb-eval">EVALUATED</span><span>Technology assessed in India; limited or no public-sector rollout yet</span></div>
+    <div class="rg-row"><span class="sb sb-prop">PROPOSED</span><span>Aspirational for India public-sector context; deployment pathway not yet defined</span></div>
+  </div>
+  <div>
+    <div class="rg-col-title"><i class="fa-solid fa-palette" style="margin-right:5px;"></i>Color coding — consistent across all sections</div>
+    <div class="rg-row"><span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#1a3f6f;margin-right:4px;vertical-align:middle;"></span><span class="rg-label">Dark blue dot / border</span>System or device intervention</div>
+    <div class="rg-row"><span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#e08000;margin-right:4px;vertical-align:middle;"></span><span class="rg-label">Orange dot / border</span>Kalpa-assessed startup</div>
+    <div class="rg-row"><span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#fff;border:3px solid #1a3f6f;margin-right:4px;vertical-align:middle;"></span><span class="rg-label">Ringed blue dot</span>ABDM platform component</div>
+    <div class="rg-row"><span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#e8e8e8;border:1px solid #ccc;margin-right:4px;vertical-align:middle;"></span><span class="rg-label">Grey dot</span>Not active in this stage</div>
+    <div style="margin-top:8px;font-size:10.5px;color:#666;"><sup class="cit">1</sup> Superscript numbers in Section 4 link to citations in the footnotes.</div>
+  </div>
+</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     SECTION 1: COVERAGE MAP
+══════════════════════════════════════════ -->
+<section id="coverage">
+<div class="sw">
+
+  <div class="sec-title"><i class="fa-solid fa-table-cells-large"></i>AI Tool Coverage by Care Stage</div>
+  <div class="sec-sub">Start here. Each row is one intervention. Dots show which care stage it operates in — hover for detail. Status badge shows deployment maturity. ~26M births/year in India; ~75% in public facilities.</div>
+
+  <table class="cov-table">
+    <thead>
+      <tr>
+        <th class="tool-hdr">Intervention</th>
+        <th><i class="fa-solid fa-baby" style="margin-right:3px;"></i>ANC<br><span style="font-weight:normal;font-size:9px;opacity:0.8;">Visits 1–8</span></th>
+        <th><i class="fa-solid fa-person-pregnant" style="margin-right:3px;"></i>Labor<br><span style="font-weight:normal;font-size:9px;opacity:0.8;">Intrapartum</span></th>
+        <th><i class="fa-solid fa-bed-pulse" style="margin-right:3px;"></i>Postpartum<br><span style="font-weight:normal;font-size:9px;opacity:0.8;">0–24 hrs</span></th>
+        <th><i class="fa-solid fa-child" style="margin-right:3px;"></i>Neonatal<br><span style="font-weight:normal;font-size:9px;opacity:0.8;">0–28 days</span></th>
+        <th class="gap-hdr">Gap addressed &amp; notes</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr>
+        <td class="tc">ARMMAN / Garbhini-GA2 <span class="sb sb-pilot">PILOT</span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="AI gestational age estimation; dropout-risk scoring"></span><span class="dot-lbl">GA model + dropout risk</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="IVR postnatal reminders day 7/14/28 — supporting role only"></span><span class="dot-lbl">IVR reminders</span></div></td>
+        <td>Naegele GA inaccuracy for Indian population · ANC dropout prediction<br><span class="caveat">Note: IVR postnatal coverage is a secondary, reminder-only function — not clinical AI.</span></td>
+      </tr>
+
+      <tr>
+        <td class="tc">AI-enabled POCUS (ultrasound) <span class="sb sb-prop">PROPOSED</span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Gestational dating, anomaly screen, placental location at CHC level"></span><span class="dot-lbl">Dating + anomaly</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Fetal presentation, EFW before operative delivery"></span><span class="dot-lbl">Presentation + EFW</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td>Ultrasound confined to district hospitals; non-specialists lack image acquisition skill<br><span class="caveat">Products exist globally (Butterfly iQ, Philips Lumify); AI-guided deployment at India sub-centre level is aspirational — no public-sector rollout yet.</span></td>
+      </tr>
+
+      <tr>
+        <td class="tc">CareNX Fetosense <span class="sb sb-pilot">PILOT</span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Portable BP, Hb, fetal Doppler; pre-eclampsia risk score"></span><span class="dot-lbl">BP, Hb, FHR</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td>No portable ANC vitals capture or pre-eclampsia risk score at sub-centre level</td>
+      </tr>
+
+      <tr>
+        <td class="tc">Janitri / DotoCare / Sybil <span class="sb sb-pilot">PILOT</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="AI CTG classification (normal/suspicious/pathological) + maternal vitals via abdominal, arm, chest sensors"></span><span class="dot-lbl">AI CTG + vitals</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td>CTG read by variable-skill clinicians; fetal distress detected late<br><span class="caveat">Sensors: abdominal (tocotransducer + FHR probe), arm (BP), chest (SpO₂/RR).</span></td>
+      </tr>
+
+      <tr>
+        <td class="tc">FetalLite (portable fetal monitor) <span class="sb sb-eval">EVALUATED</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Wireless FHR monitoring for PHCs and low-resource labor wards"></span><span class="dot-lbl">Wireless FHR</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td>CTG unavailable below district hospital</td>
+      </tr>
+
+      <tr>
+        <td class="tc">Gradi (quantified blood loss) <span class="sb sb-eval">EVALUATED</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Calibrated PPH measurement drape during delivery"></span><span class="dot-lbl">PPH drape</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Continued blood loss monitoring post-delivery"></span><span class="dot-lbl">Post-delivery</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td>Visual blood loss estimation underestimates PPH by 33–50%</td>
+      </tr>
+
+      <tr>
+        <td class="tc">Stryker–Titan (surgical PPH) <span class="sb sb-eval">EVALUATED</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Intraoperative fluid balance and PPH management in C-section or operative delivery"></span><span class="dot-lbl">Intraop PPH</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td>No intraoperative fluid balance tracking in operative PPH<br><span class="caveat">Globally at scale in surgical settings; limited India public-sector deployment.</span></td>
+      </tr>
+
+      <tr>
+        <td class="tc">Dozee — maternal monitoring <span class="sb sb-pilot">PILOT</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Contactless HR/RR/SpO₂ monitoring; early warning score for maternal deterioration during labor"></span><span class="dot-lbl">Maternal EWS</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="AI early-warning score in the 2-hour post-delivery danger window"></span><span class="dot-lbl">2-hr window</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td>Vitals checked at intervals; 2-hour post-delivery danger window missed in understaffed wards</td>
+      </tr>
+
+      <tr>
+        <td class="tc">Dozee — neonatal sepsis AI <span class="sb sb-eval">EVALUATED</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Continuous HR variability, RR, temperature pattern detection for early neonatal sepsis risk flag"></span><span class="dot-lbl">Sepsis risk flag</span></div></td>
+        <td>Neonatal sepsis detected only after clinical signs appear (12–24h after onset)<br><span class="caveat">Distinct application from maternal monitoring — neonatal sepsis AI is under evaluation, not yet at scale.</span></td>
+      </tr>
+
+      <tr>
+        <td class="tc"><span class="badge-start">★</span> Shishu Maapan <span class="sb sb-pilot">PILOT</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-start" title="AI birth anthropometry: weight and length from smartphone photo; WHO z-scores computed instantly"></span><span class="dot-lbl">Birth measurements</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-start" title="Serial growth tracking at day 7/14/28 via ASHA smartphone"></span><span class="dot-lbl">Day 7/14/28 growth</span></div></td>
+        <td>Beam balance and tape measure errors frequent; WHO z-scores rarely computed at birth</td>
+      </tr>
+
+      <tr>
+        <td class="tc"><span class="badge-start">★</span> EkaCare / Eka Doc <span class="sb sb-scale">AT SCALE</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-start" title="AI-summarised discharge note sent to mother's personal health record via ABDM"></span><span class="dot-lbl">Discharge PHR</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td>No digital discharge record for mother<br><span class="caveat">Platform at scale; MNH discharge workflow integration is in pilot phase.</span></td>
+      </tr>
+
+      <tr>
+        <td class="tc"><span class="badge-start">★</span> Khushi Baby <span class="sb sb-scale">AT SCALE</span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-start" title="ASHA digital records, community ANC tracking — primary use case, deployed in multiple states"></span><span class="dot-lbl">ASHA ANC records</span></div></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-start" title="Postnatal follow-up workflow for ASHA — capability exists; deployment varies by state programme"></span><span class="dot-lbl">ASHA follow-up*</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-start" title="Child immunization and growth record — deployed for immunization; neonatal use varies by state"></span><span class="dot-lbl">Immunization*</span></div></td>
+        <td>ASHA paper registers · no digital community-to-facility linkage<br><span class="caveat">*Postpartum and neonatal coverage via Khushi Baby varies by state; not uniformly deployed for these workflows.</span></td>
+      </tr>
+
+      <tr>
+        <td class="tc"><span class="badge-start">★</span> InAccel Saans <span class="sb sb-eval">EVALUATED</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-start" title="FPGA AI: SpO₂/HR/RR monitoring + CPAP titration; supports 1 nurse per 40–50 babies vs standard 1:4"></span><span class="dot-lbl">AI NICU monitoring</span></div></td>
+        <td>No AI NICU monitoring; standard nurse-to-baby ratio (1:4) unsustainable in public NICUs</td>
+      </tr>
+
+      <tr>
+        <td class="tc">Vayu CPAP <span class="sb sb-pilot">PILOT</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Portable bubble CPAP designed for low-resource NICUs; minimal consumables"></span><span class="dot-lbl">Portable CPAP</span></div></td>
+        <td>No CPAP available in low-resource and rural NICUs</td>
+      </tr>
+
+      <tr>
+        <td class="tc">BabyFlow 100 (Draeger/Syrma Johari) <span class="sb sb-pilot">PILOT</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="High-flow nasal CPAP for district hospitals; designed for staff without prior CPAP experience"></span><span class="dot-lbl">High-flow CPAP</span></div></td>
+        <td>No high-flow nasal CPAP at district hospital level</td>
+      </tr>
+
+      <tr>
+        <td class="tc">IoT-Enabled Incubator <span class="sb sb-prop">PROPOSED</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-sys" title="Continuous temp/humidity/SpO₂/weight monitoring with auto-alarms; connected to HMIS — proposed for India public-sector context"></span><span class="dot-lbl">Auto-monitoring</span></div></td>
+        <td>Temperature drift in basic incubators undetected; manual parameter charting with gaps<br><span class="caveat">Connected incubators exist commercially; FHIR-integrated public-sector deployment is aspirational.</span></td>
+      </tr>
+
+      <tr class="abdm-row">
+        <td class="tc"><span class="badge-abdm">ABDM</span> ABHA / Child ABHA <span class="sb sb-scale">AT SCALE</span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-abdm" title="ABHA registered: 35cr+ nationally. Integration gap: AI tools do not yet link to ABHA at ANC level in most public facilities."></span><span class="dot-lbl">35cr+ registered</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-abdm" title="Mother's ANC record available at admission — requires ABHA integration at sending and receiving facility"></span><span class="dot-lbl">Record pull</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-abdm" title="Child ABHA issuance at birth — technically possible; requires birth registration process integration"></span><span class="dot-lbl">Child ABHA</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-abdm" title="28-day longitudinal record in Child ABHA — target state, not yet achieved"></span><span class="dot-lbl">Target: 28-day record</span></div></td>
+        <td>ABHA exists nationally; the gap is that AI tools and hospital systems do not yet connect to it — records remain siloed per app</td>
+      </tr>
+
+      <tr class="abdm-row">
+        <td class="tc"><span class="badge-abdm">ABDM</span> HIE-CM (consent-gated sharing) <span class="sb sb-pilot">PILOT</span></td>
+        <td class="sc"><span class="dot d-none"></span></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-abdm" title="Consent-gated pull of ANC record at labor admission"></span><span class="dot-lbl">ANC pull</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-abdm" title="AI outputs from labor available to postpartum team via consent artefact"></span><span class="dot-lbl">Labor → postpartum</span></div></td>
+        <td class="sc"><div class="stage-cell-inner"><span class="dot d-abdm" title="NICU team accesses full birth and intrapartum history — requires chain of HIP/HIU integrations"></span><span class="dot-lbl">Full history</span></div></td>
+        <td>No patient record portability; referral means starting over; no continuity across stages</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     SECTION 2: CARE JOURNEY — SWIMLANE
+══════════════════════════════════════════ -->
+<section id="journey">
+<div class="sw">
+
+  <div class="sec-title"><i class="fa-solid fa-route"></i>Care Journey — As-Is vs To-Be</div>
+  <div class="sec-sub">Horizontal timeline. Top band = current gaps. Bottom band = AI-enabled to-be with deployment status on each tool. ABDM backbone: solid pill = operational today · dashed pill = requires full integration (target state).</div>
+
+  <div class="swimlane-scroll">
+  <div class="swimlane">
+
+    <!-- Stage headers -->
+    <div class="sl-corner"><i class="fa-solid fa-timeline" style="color:rgba(255,255,255,0.45);font-size:18px;"></i></div>
+    <div class="sl-stage-hdr"><i class="fa-solid fa-baby"></i>Antenatal Care<span class="sub">ANC visits 1–8</span></div>
+    <div class="sl-stage-hdr"><i class="fa-solid fa-person-pregnant"></i>Labor &amp; Delivery<span class="sub">Intrapartum</span></div>
+    <div class="sl-stage-hdr"><i class="fa-solid fa-bed-pulse"></i>Postpartum<span class="sub">0–24 hours</span></div>
+    <div class="sl-stage-hdr"><i class="fa-solid fa-child"></i>Neonatal Care<span class="sub">0–28 days</span></div>
+
+    <!-- AS-IS band -->
+    <div class="sl-row-label asis">As-Is Today</div>
+
+    <div class="sl-cell asis-c">
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>No AI risk scoring</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>Naegele inaccurate</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>No POCUS at CHC</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>Records siloed per facility</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>Triple data entry</span>
+    </div>
+    <div class="sl-cell asis-c">
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>No AI CTG reading</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>PPH detected late</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>No fetal presentation AI</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>ANC record unavailable at admission</span>
+    </div>
+    <div class="sl-cell asis-c">
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>2-hr danger window missed</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>No Child ABHA at birth</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>Inaccurate birth weight</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>No digital discharge record</span>
+    </div>
+    <div class="sl-cell asis-c">
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>No continuous NICU AI</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>Sepsis detected from clinical signs only</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>No CPAP in PHCs/rural NICUs</span>
+      <span class="gap-chip"><i class="fa-solid fa-ban"></i>No 28-day longitudinal record</span>
+    </div>
+
+    <!-- TO-BE band -->
+    <div class="sl-row-label tobe">To-Be AI-Enabled</div>
+
+    <div class="sl-cell tobe-c">
+      <div class="tool-node start">
+        <div class="tn-icon"><i class="fa-solid fa-star"></i></div>
+        <div><div class="tn-name">ARMMAN / Garbhini-GA2 <span class="sb sb-pilot">PILOT</span></div><div class="tn-out">India-specific GA model + dropout-risk score → IVR call</div></div>
+      </div>
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div><div class="tn-name">CareNX Fetosense <span class="sb sb-pilot">PILOT</span></div><div class="tn-out">Portable BP, Hb, FHR at sub-centre → pre-eclampsia alert</div></div>
+      </div>
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <div><div class="tn-name">AI-enabled POCUS <span class="sb sb-prop">PROPOSED</span></div><div class="tn-out">Ultrasound at CHC level — aspiration; no India public-sector rollout yet</div></div>
+      </div>
+      <div class="tool-node start">
+        <div class="tn-icon"><i class="fa-solid fa-star"></i></div>
+        <div><div class="tn-name">Khushi Baby <span class="sb sb-scale">AT SCALE</span></div><div class="tn-out">ASHA digital ANC and immunization records</div></div>
+      </div>
+    </div>
+
+    <div class="sl-cell tobe-c">
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-wave-square"></i></div>
+        <div><div class="tn-name">Janitri / DotoCare / Sybil / FetalLite <span class="sb sb-pilot">PILOT</span></div><div class="tn-out">AI CTG: normal / suspicious / pathological → obstetrician alert</div></div>
+      </div>
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <div><div class="tn-name">Intrapartum Ultrasound <span class="sb sb-eval">EVALUATED</span></div><div class="tn-out">Fetal lie + presentation + estimated weight before operative delivery</div></div>
+      </div>
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-droplet"></i></div>
+        <div><div class="tn-name">Gradi + Stryker–Titan <span class="sb sb-eval">EVALUATED</span></div><div class="tn-out">Measured blood loss (Gradi drape) + intraoperative surgical PPH management</div></div>
+      </div>
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div><div class="tn-name">Dozee — maternal EWS <span class="sb sb-pilot">PILOT</span></div><div class="tn-out">Contactless HR/RR/SpO₂ → early-warning score during labor</div></div>
+      </div>
+    </div>
+
+    <div class="sl-cell tobe-c">
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div><div class="tn-name">Dozee — post-delivery surveillance <span class="sb sb-pilot">PILOT</span></div><div class="tn-out">Continuous EWS in 2-hr danger window → nurse alert without manual rounds</div></div>
+      </div>
+      <div class="tool-node start">
+        <div class="tn-icon"><i class="fa-solid fa-star"></i></div>
+        <div><div class="tn-name">Shishu Maapan <span class="sb sb-pilot">PILOT</span></div><div class="tn-out">AI birth anthropometry from phone photo → WHO z-scores instantly</div></div>
+      </div>
+      <div class="tool-node start">
+        <div class="tn-icon"><i class="fa-solid fa-star"></i></div>
+        <div><div class="tn-name">EkaCare PHR <span class="sb sb-scale">AT SCALE</span></div><div class="tn-out">AI discharge note generated → sent to mother's health record</div></div>
+      </div>
+    </div>
+
+    <div class="sl-cell tobe-c">
+      <div class="tool-node start">
+        <div class="tn-icon"><i class="fa-solid fa-star"></i></div>
+        <div><div class="tn-name">InAccel Saans <span class="sb sb-eval">EVALUATED</span></div><div class="tn-out">FPGA AI: SpO₂/HR/RR + CPAP titration → 1 nurse per 40–50 babies</div></div>
+      </div>
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-lungs"></i></div>
+        <div><div class="tn-name">Vayu · BabyFlow 100 <span class="sb sb-pilot">PILOT</span></div><div class="tn-out">CPAP across facility tiers: portable (Vayu) and high-flow (BabyFlow)</div></div>
+      </div>
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-temperature-half"></i></div>
+        <div><div class="tn-name">IoT Incubator <span class="sb sb-prop">PROPOSED</span></div><div class="tn-out">Continuous temp/humidity/weight → auto-alarms; no manual charting</div></div>
+      </div>
+      <div class="tool-node">
+        <div class="tn-icon"><i class="fa-solid fa-virus"></i></div>
+        <div><div class="tn-name">Dozee — neonatal sepsis AI <span class="sb sb-eval">EVALUATED</span></div><div class="tn-out">HR variability + RR + temp pattern → early sepsis risk flag for clinical review</div></div>
+      </div>
+      <div class="tool-node start">
+        <div class="tn-icon"><i class="fa-solid fa-star"></i></div>
+        <div><div class="tn-name">Shishu Maapan + ARMMAN <span class="sb sb-pilot">PILOT</span></div><div class="tn-out">Growth tracking day 7/14/28 via ASHA + IVR danger-sign reminders</div></div>
+      </div>
+    </div>
+
+    <!-- ABDM backbone -->
+    <div class="sl-row-label abdm">ABDM Backbone</div>
+
+    <div class="sl-cell abdm-c" style="flex-direction:column;gap:5px;">
+      <div class="abdm-lbl">Operational today</div>
+      <span class="abdm-pill"><i class="fa-solid fa-id-card"></i> ABHA (35cr+ registered)</span>
+      <div class="abdm-lbl" style="margin-top:4px;">Requires full integration</div>
+      <span class="abdm-pill target"><i class="fa-solid fa-rotate-right"></i> Single capture → RCH + U-WIN + Poshan</span>
+    </div>
+    <div class="sl-cell abdm-c" style="flex-direction:column;gap:5px;">
+      <div class="abdm-lbl">Operational today</div>
+      <span class="abdm-pill"><i class="fa-solid fa-arrows-rotate"></i> HIE-CM framework</span>
+      <div class="abdm-lbl" style="margin-top:4px;">Requires full integration</div>
+      <span class="abdm-pill target"><i class="fa-solid fa-rotate-right"></i> ANC record pulled at admission</span>
+    </div>
+    <div class="sl-cell abdm-c" style="flex-direction:column;gap:5px;">
+      <div class="abdm-lbl">Operational today</div>
+      <span class="abdm-pill"><i class="fa-solid fa-id-card"></i> Child ABHA (issuable at birth)</span>
+      <div class="abdm-lbl" style="margin-top:4px;">Requires full integration</div>
+      <span class="abdm-pill target"><i class="fa-solid fa-rotate-right"></i> U-WIN vaccination from day 0</span>
+    </div>
+    <div class="sl-cell abdm-c" style="flex-direction:column;gap:5px;">
+      <div class="abdm-lbl">Operational today</div>
+      <span class="abdm-pill"><i class="fa-solid fa-file-invoice"></i> NHCX framework</span>
+      <div class="abdm-lbl" style="margin-top:4px;">Target state</div>
+      <span class="abdm-pill target"><i class="fa-solid fa-rotate-right"></i> 28-day longitudinal record in Child ABHA</span>
+    </div>
+
+  </div><!-- /swimlane -->
+  </div><!-- /swimlane-scroll -->
+
+</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     SECTION 3: REFERENCE ARCHITECTURE
+══════════════════════════════════════════ -->
+<section id="architecture">
+<div class="sw">
+
+  <div class="sec-title"><i class="fa-solid fa-layer-group"></i>Reference Architecture — As-Is vs To-Be</div>
+  <div class="sec-sub">Five system layers. Each layer shows what exists today and what changes when AI and ABDM are introduced. Plain-language descriptions — no protocol acronyms.</div>
+
+  <!-- Column headers -->
+  <div style="display:grid;grid-template-columns:100px 1fr 24px 1fr;gap:5px;margin-bottom:6px;">
+    <div></div>
+    <div style="background:#6b6b6b;color:#fff;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.4px;padding:7px 10px;text-align:center;border-radius:3px;"><i class="fa-solid fa-circle-xmark" style="margin-right:6px;"></i>As-Is</div>
+    <div></div>
+    <div style="background:#1a3f6f;color:#fff;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.4px;padding:7px 10px;text-align:center;border-radius:3px;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>To-Be</div>
+  </div>
+
+  <div class="arch-grid">
+
+    <!-- Layer 1: Capture -->
+    <div class="arch-row">
+      <div class="arch-layer-lbl"><i class="fa-solid fa-microchip"></i>1. Capture</div>
+      <div class="arch-cell asis">
+        <div class="cell-hdr"><i class="fa-solid fa-circle-xmark" style="color:#888;"></i>Manual devices, paper records</div>
+        <div class="chip-row">
+          <span class="chip grey">Manual BP meter</span>
+          <span class="chip grey">Hb strip (manual read)</span>
+          <span class="chip grey">Beam balance (weight)</span>
+          <span class="chip grey">CTG machine (clinician reads printout)</span>
+          <span class="chip grey">Paper MCP card</span>
+          <span class="chip grey">MUAC tape</span>
+          <span class="chip red">No ultrasound below district hospital</span>
+        </div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-cell tobe">
+        <div class="cell-hdr"><i class="fa-solid fa-circle-check"></i>AI-enabled device layer</div>
+        <div class="chip-row">
+          <span class="chip blue">CareNX: portable kit (BP, Hb, fetal heart rate)</span>
+          <span class="chip blue">AI-guided portable ultrasound <span class="sb sb-prop" style="font-size:7.5px;">PROPOSED</span></span>
+          <span class="chip orange">★ Shishu Maapan: smartphone measures newborn size</span>
+          <span class="chip blue">Janitri/Sybil/FetalLite: AI reads the CTG for the clinician</span>
+          <span class="chip blue">Dozee: contactless sensor mat reads vitals without touching patient</span>
+          <span class="chip blue">Gradi: calibrated drape measures blood loss in ml, not by eye</span>
+          <span class="chip blue">Stryker–Titan: tracks fluid balance during surgery</span>
+          <span class="chip orange">★ InAccel Saans: NICU monitoring + CPAP titration from one device</span>
+          <span class="chip blue">Vayu CPAP · BabyFlow 100: breathing support for premature newborns</span>
+          <span class="chip blue">IoT Incubator: temperature and weight logged automatically <span class="sb sb-prop" style="font-size:7.5px;">PROPOSED</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 2: Edge & Digitisation -->
+    <div class="arch-row">
+      <div class="arch-layer-lbl"><i class="fa-solid fa-server"></i>2. Data Capture &amp; Storage</div>
+      <div class="arch-cell asis">
+        <div class="cell-hdr"><i class="fa-solid fa-circle-xmark" style="color:#888;"></i>Manual entry into separate systems</div>
+        <div class="chip-row">
+          <span class="chip grey">Data entry operator types readings into hospital system — delayed, error-prone</span>
+          <span class="chip grey">Each system (hospital, immunisation, nutrition) uses its own format — nothing talks to anything else</span>
+          <span class="chip red">Same patient data re-entered 3 times: maternity register → immunisation portal → nutrition tracker</span>
+        </div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-cell tobe">
+        <div class="cell-hdr"><i class="fa-solid fa-circle-check"></i>One capture, distributed automatically</div>
+        <div class="chip-row">
+          <span class="chip blue">Device readings auto-converted to a standard health record format (FHIR) — no manual transcription</span>
+          <span class="chip blue">Hospital system packages patient records into shareable bundles (HIP role)</span>
+          <span class="chip orange">★ EkaCare / Eka Doc: doctor's voice or text notes auto-structured into records</span>
+          <span class="chip green">One capture at point of care → maternity register + immunisation portal + nutrition tracker updated simultaneously</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 3: Clinical / AI -->
+    <div class="arch-row">
+      <div class="arch-layer-lbl"><i class="fa-solid fa-brain"></i>3. Clinical &amp; AI Decision Support</div>
+      <div class="arch-cell asis">
+        <div class="cell-hdr"><i class="fa-solid fa-circle-xmark" style="color:#888;"></i>Clinical judgment only — no decision support</div>
+        <div class="chip-row">
+          <span class="chip grey">Gestational age: Naegele rule from last period — inaccurate for Indian population</span>
+          <span class="chip grey">Risk assessment: depends on individual clinician's experience</span>
+          <span class="chip grey">CTG interpretation: no AI; misread rates vary by facility</span>
+          <span class="chip grey">No automatic alert for maternal or neonatal deterioration</span>
+          <span class="chip grey">No prediction of which mothers will miss ANC visits</span>
+        </div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-cell tobe">
+        <div class="cell-hdr"><i class="fa-solid fa-circle-check"></i>AI flags risk — clinician reviews and acts</div>
+        <div class="chip-row">
+          <span class="chip orange">★ ARMMAN / Garbhini-GA2: India-specific gestational age AI + ANC dropout prediction <span class="sb sb-pilot" style="font-size:7.5px;">PILOT</span></span>
+          <span class="chip blue">Janitri / Sybil / FetalLite: AI classifies each CTG as normal, suspicious, or pathological <span class="sb sb-pilot" style="font-size:7.5px;">PILOT</span></span>
+          <span class="chip blue">Gradi + Dozee + Stryker–Titan: measured blood loss + continuous deterioration alert + surgical fluid balance <span class="sb sb-eval" style="font-size:7.5px;">EVALUATED</span></span>
+          <span class="chip orange">★ InAccel Saans + Vayu + BabyFlow: breathing support for premature newborns across facility tiers <span class="sb sb-eval" style="font-size:7.5px;">EVALUATED / PILOT</span></span>
+          <span class="chip blue">Dozee neonatal sepsis: flags early risk pattern — clinician decides on antibiotics <span class="sb sb-eval" style="font-size:7.5px;">EVALUATED</span></span>
+          <span class="chip grey" style="font-size:10px;font-style:italic;">All AI outputs require clinician or ANM sign-off before action is taken. Model version recorded for accountability.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 4: ABDM Platform -->
+    <div class="arch-row">
+      <div class="arch-layer-lbl abdm-lbl"><i class="fa-solid fa-shield-halved"></i>4. ABDM Platform</div>
+      <div class="arch-cell asis">
+        <div class="cell-hdr"><i class="fa-solid fa-circle-xmark" style="color:#888;"></i>No integration between tools and national identity</div>
+        <div class="chip-row">
+          <span class="chip grey">ABHA exists nationally (35cr+ enrolled) but AI tools and hospital systems do not connect to it — records stay inside each app</span>
+          <span class="chip grey">No mechanism for a patient to control who accesses her records</span>
+          <span class="chip grey">Referral to another facility means starting over — no record travels with the patient</span>
+          <span class="chip red">Insurance claim filed separately with each insurer — 4 to 7 working days for maternity reimbursement</span>
+        </div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-cell tobe abdm-tc">
+        <div class="cell-hdr"><i class="fa-solid fa-shield-halved"></i>ABDM — National Health Authority Digital Infrastructure</div>
+        <div class="chip-row">
+          <span class="chip abdm-c"><i class="fa-solid fa-id-card" style="margin-right:4px;"></i>ABHA / Child ABHA — unique persistent ID linking all records</span>
+          <span class="chip abdm-c"><i class="fa-solid fa-arrows-rotate" style="margin-right:4px;"></i>HIE-CM — patient-controlled consent to share records across providers</span>
+          <span class="chip abdm-c"><i class="fa-solid fa-video" style="margin-right:4px;"></i>UHI — telemedicine booking on a standard network</span>
+          <span class="chip abdm-c"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>NHCX — single-window maternity insurance claim</span>
+          <span class="chip abdm-c"><i class="fa-solid fa-building-columns" style="margin-right:4px;"></i>HFR / HPR — verified registry of facilities and health workers</span>
+          <span class="chip abdm-c"><i class="fa-solid fa-star" style="margin-right:4px;color:#FFB552;"></i>EkaCare PHR — patient-facing health record app</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 5: Programmes & Feedback -->
+    <div class="arch-row">
+      <div class="arch-layer-lbl"><i class="fa-solid fa-arrow-right-arrow-left"></i>5. Programmes &amp; Community Feedback</div>
+      <div class="arch-cell asis">
+        <div class="cell-hdr"><i class="fa-solid fa-circle-xmark" style="color:#888;"></i>Separate programmes, no data link back to community</div>
+        <div class="chip-row">
+          <span class="chip grey">Maternity register, immunisation portal, nutrition tracker: separate systems, no shared patient ID</span>
+          <span class="chip grey">ANM / ASHA rely on manual registers to find overdue patients — no AI-generated recall list</span>
+          <span class="chip grey">After hospital discharge, community ASHA worker has no visibility of what happened at the facility</span>
+          <span class="chip grey">At 28 days: the same child's data exists in 4–5 separate registers with no linkage</span>
+        </div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-cell tobe">
+        <div class="cell-hdr"><i class="fa-solid fa-circle-check"></i>Single data push feeds all programmes; AI routes follow-up</div>
+        <div class="chip-row">
+          <span class="chip blue">One record update at point of care simultaneously updates maternity register, immunisation portal, and nutrition tracker</span>
+          <span class="chip orange">★ ARMMAN: AI-generated list of mothers at risk of missing next visit → automatic IVR outreach</span>
+          <span class="chip orange">★ Shishu Maapan: ASHA records growth at day 7/14/28 on smartphone — data flows to child's record</span>
+          <span class="chip orange">★ Khushi Baby: ASHA's community visits logged digitally; immunisation schedule linked to birth event</span>
+          <span class="chip blue">EkaCare PHR: mother receives vaccine reminders, growth alerts, and discharge summary on her phone</span>
+          <span class="chip green">Target state: complete mother + newborn record from ANC to day 28 in one place — first time this would exist</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /arch-grid -->
+</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     SECTION 4: HEALTH IMPACT
+══════════════════════════════════════════ -->
+<section id="impact">
+<div class="sw">
+
+  <div class="sec-title"><i class="fa-solid fa-chart-line"></i>Intervention → Data Flow → Expected Health Impact</div>
+  <div class="sec-sub">Quantitative claims are sourced with numbered citations below. Where evidence is limited or the causal chain is indirect, this is stated explicitly.</div>
+
+  <table class="impact-table">
+    <thead>
+      <tr>
+        <th style="width:76px;">Stage</th>
+        <th style="width:195px;">Intervention</th>
+        <th>Gap Closed</th>
+        <th style="width:200px;">Data Flow</th>
+        <th>Expected Impact &amp; Evidence Basis</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr>
+        <td><span class="st anc">ANC</span></td>
+        <td>Garbhini-GA2 (AI gestational age)</td>
+        <td>Naegele's rule has a 7–14 day mean error in Indian cohorts due to irregular menstrual cycles in ~30% of women</td>
+        <td>Structured health record (GA estimate) → hospital system → patient health record</td>
+        <td><span class="iv">Reduces mean GA estimation error to ~3 days</span>; corrects preterm classification for ~30% of cohort. <sup class="cit">[1]</sup></td>
+      </tr>
+
+      <tr>
+        <td><span class="st anc">ANC</span></td>
+        <td>ARMMAN mMitra (dropout prediction + IVR)</td>
+        <td>Reactive ASHA follow-up; high ANC dropout at visits 4–8; high-risk pregnancies missed between visits</td>
+        <td>AI risk score → ANM dashboard → automated outreach call to mother</td>
+        <td><span class="iv">~15% improvement in ANC visit adherence</span> in ARMMAN-enrolled cohorts. <sup class="cit">[2]</sup> <span class="qual">Figures vary by state and enrolment approach; no large-scale RCT published yet.</span></td>
+      </tr>
+
+      <tr>
+        <td><span class="st anc">ANC</span></td>
+        <td>AI-enabled point-of-care ultrasound</td>
+        <td>Ultrasound access limited to district hospitals; non-specialists lack image acquisition skill</td>
+        <td>Structured diagnostic report → patient record → referral flag to specialist</td>
+        <td><span class="iv">Earlier detection of placenta praevia, malpresentation, and major anomalies</span>; task-shifts ultrasound to CHC / sub-centre level. <span class="qual">Benefit projected from global POCUS trials; no India public-sector RCT yet. Marked PROPOSED in coverage map.</span></td>
+      </tr>
+
+      <tr>
+        <td><span class="st labor">Labor</span></td>
+        <td>Janitri / DotoCare / Sybil / FetalLite (AI CTG)</td>
+        <td>CTG read by variable-skill clinicians; fetal distress identified late from clinical signs rather than waveform</td>
+        <td>AI classification (normal / suspicious / pathological) → real-time alert to obstetrician</td>
+        <td><span class="iv">Earlier identification of pathological CTG patterns</span>; associated with lower intrapartum stillbirth and hypoxic injury rates in Janitri pilot, UP, 2023. <sup class="cit">[3]</sup> <span class="qual">Pilot data per company; not yet published in peer-reviewed journal.</span></td>
+      </tr>
+
+      <tr>
+        <td><span class="st labor">Labor</span></td>
+        <td>Gradi + Dozee + Stryker–Titan (PPH)</td>
+        <td>Visual blood loss estimation underestimates PPH by 33–50%; treatment delayed until clinical deterioration is visible</td>
+        <td>Measured blood loss + continuous vital-sign alert → escalation to senior clinician</td>
+        <td><span class="iv">Quantified blood loss reduces both under- and over-treatment of PPH</span>; Gradi clinical validation shows estimated error &lt;50ml vs &gt;200ml by visual assessment. <sup class="cit">[4]</sup> PPH causes 25–30% of maternal deaths in India. <span class="qual">Time-to-intervention improvement is plausible but no published India trial data available at this time.</span></td>
+      </tr>
+
+      <tr>
+        <td><span class="st postpart">Postpartum</span></td>
+        <td>Dozee — post-delivery maternal monitoring</td>
+        <td>Post-delivery vitals checked at manual intervals; the 2-hour danger window is frequently missed in understaffed wards</td>
+        <td>Continuous vital-sign record → early-warning score → nurse alert</td>
+        <td><span class="iv">Continuous maternal surveillance without additional nursing workload</span>; removes dependence on manual round frequency. <span class="qual">Benefit is conditional on a functioning alarm-to-action workflow. Clinical outcome data (PPH/eclampsia reduction) from India pilots not yet published.</span></td>
+      </tr>
+
+      <tr>
+        <td><span class="st postpart">Postpartum</span></td>
+        <td>Shishu Maapan (AI birth anthropometry)</td>
+        <td>Beam balance and tape measure errors frequent; WHO z-scores rarely computed; low-birthweight infants sometimes missed</td>
+        <td>Birth weight, length, and z-score → newborn's health record</td>
+        <td><span class="iv">Accurate low-birthweight identification at birth</span>; triggers Kangaroo Mother Care protocol and NICU referral pathway where indicated; prevents missed wasting at discharge.</td>
+      </tr>
+
+      <tr>
+        <td><span class="st neonatal">Neonatal</span></td>
+        <td>InAccel Saans / Vayu / BabyFlow 100 (CPAP)</td>
+        <td>Respiratory distress syndrome: delayed CPAP due to device and skill shortage; standard 1:4 nurse-to-baby ratio unsustainable in public NICUs</td>
+        <td>SpO₂ and CPAP parameters → newborn's health record → insurance claim trigger</td>
+        <td><span class="iv">CPAP vs no respiratory support reduces neonatal RDS mortality by 30–50%</span> in preterm infants. <sup class="cit">[5]</sup> <span class="qual">This is a generic CPAP benefit from published meta-analyses, not specific to Saans/Vayu/BabyFlow 100 — India pilot data for these specific devices is awaited. InAccel Saans 1:40–50 nurse ratio claim is based on device capability, not yet validated at scale.</span></td>
+      </tr>
+
+      <tr>
+        <td><span class="st neonatal">Neonatal</span></td>
+        <td>IoT-Enabled Incubator</td>
+        <td>Temperature drift in basic incubators undetected between nursing rounds; parameters manually charted with gaps</td>
+        <td>Temperature, humidity, and weight readings → auto-alarm to nursing station → newborn's health record</td>
+        <td><span class="iv">Prevents undetected hypothermia</span>; hypothermia on NICU admission is associated with a 2–3× higher mortality risk in preterm neonates. <sup class="cit">[6]</sup> <span class="qual">IoT incubators exist commercially (e.g., Draeger Caleo); FHIR-integrated deployment in India public NICUs is aspirational.</span></td>
+      </tr>
+
+      <tr>
+        <td><span class="st neonatal">Neonatal</span></td>
+        <td>Dozee — neonatal sepsis AI</td>
+        <td>Neonatal sepsis detected only after clinical signs appear — typically 12–24 hours after onset; treatment started late</td>
+        <td>Continuous HR variability, respiratory rate, and temperature pattern → sepsis risk score → neonatologist alert for clinical review</td>
+        <td><span class="iv">Flags early sepsis risk pattern 6–12 hours before clinical signs appear</span> — giving the clinical team time to review and start antibiotics. <span class="qual">Dozee detects the risk signal; the health outcome depends on the clinical team's response. Neonatal sepsis case fatality rate falls from 20–30% to under 10% with early antibiotic initiation <sup class="cit">[7]</sup> — but Dozee's specific contribution to this chain is under evaluation and not yet independently validated.</span></td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- Footnotes -->
+  <div class="footnotes">
+    <div class="fn-title"><i class="fa-solid fa-book-open" style="margin-right:6px;"></i>Citations</div>
+    <ol>
+      <li><strong>[1]</strong> GARBH-Ini Consortium (Chowdhury MR et al.). "A population-based gestational age assessment model for India." <em>PLOS Medicine</em>, 2021. Validated on 8,000+ pregnancies from AIIMS Delhi cohort. Garbhini-GA2 mean absolute error: 3.2 days vs 7–14 days for Naegele in Indian population with irregular menstrual cycles.</li>
+      <li><strong>[2]</strong> ARMMAN mMitra Programme Outcome Reports, 2021–23. ANC visit adherence improvement of ~15% in enrolled cohorts across Maharashtra, UP, and Rajasthan. Results vary by state, enrolment approach, and ASHA integration. Peer-reviewed publications pending at time of writing.</li>
+      <li><strong>[3]</strong> Janitri Technologies, UP State Pilot Data, 2023. Unpublished data shared per company. Independent peer-reviewed publication not yet available; treat as indicative, not evidentiary.</li>
+      <li><strong>[4]</strong> Gradi S.A. Clinical validation studies, 2021–22. Calibrated drape vs visual estimation in 400+ deliveries; mean absolute error &lt;50ml for drape vs &gt;200ml for visual assessment. Available from manufacturer on request.</li>
+      <li><strong>[5]</strong> WHO Guidelines on CPAP for preterm neonates, 2015. Polin RA &amp; Carlo WA. "Surfactant replacement therapy for preterm and term neonates with respiratory distress." <em>Pediatrics</em>, 2014. Meta-analytic estimate: 30–50% reduction in RDS mortality with CPAP vs room air or oxygen alone.</li>
+      <li><strong>[6]</strong> Lunze K et al. "The global burden of neonatal hypothermia: systematic review of a major challenge for newborn survival." <em>BMC Pediatrics</em>, 2013. Hypothermia on admission (axillary temp &lt;36.5°C) associated with 2–3× odds of neonatal death in preterm infants across low-income settings.</li>
+      <li><strong>[7]</strong> National Neonatology Forum India. "NNF Guidelines for Management of Sepsis in Neonates," 2022. National Neonatal-Perinatal Database (NNPD) Network data: in-hospital neonatal sepsis case fatality rates 20–30% without early treatment; &lt;10% with protocol-driven early antibiotic initiation in tertiary NICUs.</li>
+    </ol>
+  </div>
+
+</div>
+</section>
+
+
+<p class="footer">
+  Kalpa Impact · Gates Healthcare · AI-Enabled Coordinated Care · June 2026 &nbsp;·&nbsp;
+  Kalpa Impact is the assessor of the startup interventions marked ★; this is not an endorsement by the Gates Foundation.
+  Sources per Section 4 footnotes. Status badges reflect deployment maturity as of June 2026.
+</p>
+
+</body>
+</html>

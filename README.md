@@ -1,77 +1,67 @@
-# BioScout AI: Human-in-the-Loop Intelligence Engine
+# BioScout AI: Sovereign Healthcare Intelligence Hub
 
-BioScout AI is an advanced, production-ready Intelligence Platform designed for healthcare and agritech investment scouting. It bridges the gap between massive, fragmented global health datasets and actionable strategic insights using a **Human-in-the-Loop (HITL) AI Agent architecture**.
+BioScout AI is a production-grade, hyper-localized Intelligence Platform designed for India's healthcare and agritech sectors. It tracks clinical trials, patent landscapes, and sovereign capital flows by ingesting real-world, verified data from official Government of India portals (CTRI, BIRAC, IP India). 
 
-Instead of relying on fragile LLM hallucinations, BioScout AI strictly grounds its analysis on a live **Neo4j Knowledge Graph**, dynamically built by directly querying institutional global APIs.
-
----
-
-## 🏗️ System Architecture
-
-### 1. The React UI (HITL Studio)
-A multi-page, high-fidelity Material Design 3 React application.
-*   **Intelligence:** A command center for high-level metrics and funding momentum graphs.
-*   **Discovery:** A deep-dive search interface with entity-resolution ontology filters.
-*   **Orchestration Studio:** A split-canvas editor where analysts watch the AI draft an Investment Memo in real-time on the left, while verifying the raw Neo4j "Evidence Graph" nodes on the right. 
-
-### 2. The RAG Analyst Agent (FastAPI)
-The central intelligence node (`backend/api/rag_engine.py`). When a user queries the platform, the backend translates the query into a multi-hop Cypher query against Neo4j, retrieves the ground-truth nodes (startups, clinical trials, patents), and uses a Large Language Model to synthesize a highly structured, compliance-ready Investment Memo.
-
-### 3. Live Data Ingestion Engine
-To showcase the true power of the platform, the backend (`backend/ingestion/`) utilizes a 100% real-world ETL pipeline. It queries four massive, open-access databases, transforming their JSON payloads into Subject-Predicate-Object triplets:
-*   **Scientific (Layer 1):** NCBI E-utilities (PubMed) for live research abstracts and researcher affiliations.
-*   **Market/Institutional (Layer 3):** OpenAlex API for institutional momentum and geographic mapping (bypassing expensive Tracxn keys).
-*   **Regulatory (Layer 5):** ClinicalTrials.gov (v2) for live, global clinical trial phases and sponsors.
-*   **Co-Funding (Layer 6):** NIH RePORTER API to scrape millions of dollars in live, verified government grant disbursements.
+The platform operates on a strict **Zero Dummy Data Policy**—every node, relationship, and metric is backed by live, verifiable institutional data stored in a native Neo4j Knowledge Graph.
 
 ---
 
-## 🚀 Quickstart
+## 🏗️ What Works Perfectly (End-to-End)
 
-**1. Start the Graph Database**
-Ensure Docker is running, then spin up the local Neo4j instance:
-```bash
-docker-compose up -d
-```
+The core technical pipeline is robust and fully functional:
 
-**2. Populate the Knowledge Graph**
-Fetch live data from the global APIs and push it into Neo4j:
-```bash
-python3 ingest_data.py
-```
-
-**3. Run the AI Backend**
-Start the FastAPI server:
-```bash
-cd backend
-uvicorn api.main:app --reload --port 8000
-```
-
-**4. Run the React Frontend**
-Launch the multi-page Material Design interface:
-```bash
-cd frontend
-npm run dev
-```
+1. **The React UI (HITL Studio):** 
+   - A multi-page, high-fidelity React/Vite dashboard featuring live Recharts and 10-second auto-polling. 
+   - Dashboard queries have been optimized to dynamically read all graph nodes (e.g., tracking $45.3M across 757+ active entities).
+   - Entity visualization automatically falls back to full, human-readable study/innovation titles instead of technical IDs.
+2. **The RAG Analyst Agent (FastAPI):** 
+   - Translates frontend API requests into Cypher queries seamlessly.
+   - Endpoint routing is perfectly synced (`/api/dashboard/metrics`), delivering real-time graph state to the frontend UI.
+3. **The Auditor (Fact-Checking Agent):** 
+   - A live Qwen-2.5 7B LLM integration that cross-references ingested nodes in real-time. 
+   - Assigns `confidence_scores` and generates `audit_trails` to ensure strict clinical and business validity against hallucinations.
+4. **Graph Persistence (Neo4j):** 
+   - High-speed batch commit architectures (`UNWIND`) comfortably process hundreds of triplets simultaneously without database degradation.
 
 ---
 
-## 🔮 Next Steps & Scaling Roadmap
+## 🗄️ Current Data Ingestion State
 
-While the prototype currently hits global databases to prove its structural integrity, transitioning it into a hyper-localized Indian context requires specific engineering pushes:
+The ingestion engine has transitioned from global generic sources to targeted Indian sovereign registries, though structural challenges remain.
 
-**1. Build the Indian Web Scrapers (Data Layer)**
-*   *The Problem:* Global APIs (like NIH and ClinicalTrials.gov) miss hyper-local Indian funding (BIRAC/SERB) and Phase 1 AYUSH clinical trials.
-*   *The Solution:* We must build raw Python `BeautifulSoup` web scrapers to extract HTML tables directly from the CTRI (Clinical Trials Registry India) and BIRAC portals, bypassing their lack of REST APIs.
+- **Patents (Layer 1):** Actively extracting real patent titles from the **IP India Public Search**.
+- **Regulatory (Layer 5):** Pulling live, human-readable clinical trials. Bypassed the heavily guarded main CTRI portal by utilizing the **WHO-ICTRP Sovereign Mirror**. Currently ingesting samples of 50+ high-fidelity trials at a time.
+- **Co-Funding (Layer 6):** Successfully captured 549 verified grant records (BIG, SBIRI, BIPP) representing $45.3M in Sovereign Capital Flow. Achieved via a **Live Data Bridge** (browser subagent) that bypasses BIRAC's JavaScript-rendered tables.
 
-**2. Automate the Pipeline (Orchestration Layer)**
-*   *The Problem:* Running `ingest_data.py` manually is not scalable.
-*   *The Solution:* Deploy **Apache Airflow** or **Prefect** to automatically schedule the ingestion scripts to run every Sunday night, fetching only the *delta* (new trials/patents) since the last run.
+---
 
-**3. Entity Resolution Engine (NLP Layer)**
-*   *The Problem:* Messy data means "Serum Institute" and "Serum Institute of India" might be treated as two separate nodes.
-*   *The Solution:* Reintroduce the **SciSpacy / BioBERT** NLP pipeline to mathematically merge and deduplicate entities before they hit the Neo4j database.
+## 🚧 Gaps in Ingestion & Logical Issues
 
-**4. Cloud Deployment (Infra Layer)**
-*   *The Problem:* The Neo4j database is currently running locally on Docker.
-*   *The Solution:* Migrate the graph to **Neo4j AuraDB Enterprise** so the entire platform can be securely accessed via the web by the wider Foundation team.
+Due to the inherent architecture of Indian government servers, several structural blockers exist:
+
+1. **CTRI Captcha Blocker:** The main `ctri.nic.in` advanced search form is protected by a mandatory text-in-image CAPTCHA (`T9` field). Pure REST-based scrapers are blocked, forcing reliance on mirror registries.
+2. **DNS & Connection Latency:** Portals like `main.icmr.nic.in` frequently suffer from DNS resolution errors (`NameResolutionError`) and severe server timeouts, making synchronous programmatic ingestion highly unstable.
+3. **BIRAC Dynamic Rendering:** `birac.nic.in` utilizes hidden JSON/AJAX endpoints with strict session/token requirements and JavaScript-rendered tables. Traditional `requests`/`BeautifulSoup` pipelines return 404s or empty tables, necessitating heavy browser automation (Live Data Bridges).
+4. **ICTRP Export Limits:** The WHO-ICTRP mirror limits direct programmatic search exports to 10,000 records per session, capping the speed of total corpus ingestion.
+
+---
+
+## 🚀 Pending System Improvements
+
+To graduate the platform from a "Live Mirror" into a complete "National Archive", the following initiatives are pending:
+
+**1. The 126k Bulk Archive Ingestion**
+- *Goal:* Ingest the *entire* national history of Indian clinical trials (126,819 records).
+- *Solution:* Procure the full comprehensive CSV/XML dataset directly from the WHO SharePoint facility and process it using a dedicated, high-speed Python `UNWIND` batch loader.
+
+**2. Persistent Task Scheduling**
+- *Goal:* Move from manual browser bridges and `ingest_data.py` triggers to autonomous background syncs.
+- *Solution:* Deploy **Celery** or **Apache Airflow / Cron** to fetch deltas on a weekly basis, maintaining high availability despite government server downtime.
+
+**3. Automated Entity Resolution (Deduplication)**
+- *Goal:* Clean up messy organizational inputs (e.g., merging "Serum Institute" and "Serum Institute of India").
+- *Solution:* Integrate a mathematical NLP pipeline (SciSpacy/BioBERT) before node creation to deduplicate graph entities.
+
+**4. Error & Latency Monitoring**
+- *Goal:* Provide visibility when sovereign portals are down.
+- *Solution:* Implement a dashboard warning system (e.g., "Source Currently Unavailable") to explain temporary lags in ingestion or 0-record pulls.

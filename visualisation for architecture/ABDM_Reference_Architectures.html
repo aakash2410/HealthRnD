@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ABDM Reference Architectures — MNCH</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #222;
+    background: #fff;
+    padding: 32px 36px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  h1 { font-size: 15px; font-weight: bold; margin-bottom: 4px; }
+  .page-subtitle { font-size: 11px; color: #555; margin-bottom: 28px; }
+
+  /* ── Section heading ── */
+  .section-title {
+    font-size: 13px;
+    font-weight: bold;
+    background: #1a3f6f;
+    color: #fff;
+    padding: 7px 12px;
+    margin-bottom: 0;
+  }
+  .section-context {
+    font-size: 10px;
+    color: #555;
+    background: #f0f4fa;
+    border: 1px solid #c8d5e8;
+    border-top: none;
+    padding: 4px 12px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Layer row ── */
+  .layer {
+    display: flex;
+    align-items: stretch;
+    margin-bottom: 4px;
+  }
+  .layer-name {
+    width: 130px;
+    min-width: 130px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #1a3f6f;
+    border: 1px solid #1a3f6f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6px 4px;
+    margin-right: 6px;
+    line-height: 1.3;
+    background: #f0f4fa;
+  }
+  .layer-boxes {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid #bbb;
+    background: #fafafa;
+  }
+
+  /* ── Normal box ── */
+  .box {
+    border: 1px solid #888;
+    background: #fff;
+    padding: 4px 8px;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  /* ── Startup box ── */
+  .startup {
+    border: 1.5px solid #e08000;
+    background: #fffbf2;
+    padding: 4px 8px;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .startup .sname {
+    font-weight: bold;
+    color: #7a3e00;
+  }
+  .startup .srole {
+    color: #555;
+    font-size: 10px;
+  }
+
+  /* ── Arrow ── */
+  .arrow {
+    text-align: center;
+    font-size: 16px;
+    color: #444;
+    margin: 2px 0 2px 67px;
+    line-height: 1;
+  }
+
+  /* ── ABDM Platform ── */
+  .abdm-wrap {
+    display: flex;
+    align-items: stretch;
+    margin: 4px 0;
+  }
+  .abdm-label {
+    width: 130px;
+    min-width: 130px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #fff;
+    background: #1a3f6f;
+    border: 1px solid #1a3f6f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6px 4px;
+    margin-right: 6px;
+    line-height: 1.3;
+  }
+  .abdm-platform {
+    flex: 1;
+    border: 2px solid #1a3f6f;
+    background: #f7faff;
+    padding: 10px 12px;
+  }
+  .abdm-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: #1a3f6f;
+    margin-bottom: 8px;
+  }
+  .abdm-core {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .abdm-core-box {
+    flex: 1;
+    min-width: 160px;
+    border: 1.5px solid #1a3f6f;
+    background: #1a3f6f;
+    color: #fff;
+    padding: 7px 10px;
+  }
+  .abdm-core-box .cname { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
+  .abdm-core-box .cdesc { font-size: 10px; opacity: 0.9; line-height: 1.35; }
+  .abdm-gateways {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding-top: 6px;
+    border-top: 1px dashed #7a9ccf;
+  }
+  .gw-label { font-size: 10px; color: #555; font-weight: bold; margin-right: 2px; }
+  .gw-box {
+    border: 1px solid #1a3f6f;
+    background: #fff;
+    color: #1a3f6f;
+    padding: 3px 7px;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  .gw-box.inactive {
+    border-color: #aaa;
+    color: #888;
+    background: #f0f0f0;
+  }
+
+  /* ── Divider between settings ── */
+  .divider { border: none; border-top: 2px solid #ddd; margin: 32px 0 28px; }
+
+  /* ── Startup legend strip ── */
+  .startup-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border: 1px solid #e08000;
+    background: #fffbf2;
+    padding: 8px 10px;
+    margin-top: 10px;
+    font-size: 10px;
+  }
+  .startup-legend .leg-title {
+    width: 100%;
+    font-weight: bold;
+    color: #7a3e00;
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+  .sl-item {
+    border: 1px solid #e08000;
+    padding: 4px 8px;
+    background: #fff;
+    line-height: 1.35;
+    min-width: 180px;
+    flex: 1;
+  }
+  .sl-item .sn { font-weight: bold; color: #7a3e00; }
+  .sl-item .si { color: #1a3f6f; }
+
+  /* ── Summary table ── */
+  table.summary {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 11px;
+  }
+  table.summary th {
+    background: #1a3f6f;
+    color: white;
+    padding: 7px 10px;
+    text-align: left;
+    border: 1px solid #1a3f6f;
+  }
+  table.summary td {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    vertical-align: top;
+  }
+  table.summary tr:nth-child(even) td { background: #f7f9ff; }
+  .tag { font-size: 9px; font-weight: bold; padding: 1px 5px; border: 1px solid; }
+  .tag-a { color: #1a3f6f; border-color: #1a3f6f; background: #e8f0fb; }
+  .tag-b { color: #2e6b2e; border-color: #2e6b2e; background: #e8f5e8; }
+  .tag-c { color: #7a1a2e; border-color: #7a1a2e; background: #fce8ed; }
+
+  /* ── Why ABDM callout ── */
+  .why-abdm {
+    border: 1.5px solid #1a3f6f;
+    margin: 12px 0 4px;
+    display: flex;
+  }
+  .why-abdm-label {
+    background: #1a3f6f;
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    padding: 8px 5px;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .why-abdm-body {
+    padding: 10px 12px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+    background: #f7faff;
+  }
+  .why-col {
+    flex: 1;
+    min-width: 200px;
+  }
+  .why-col .wc-title {
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #c8d5e8;
+  }
+  .why-col.without .wc-title { color: #8b0000; border-color: #e0b0b0; }
+  .why-col.with    .wc-title { color: #1a3f6f; border-color: #c8d5e8; }
+  .why-col ul {
+    list-style: none;
+    padding: 0;
+  }
+  .why-col ul li {
+    font-size: 10.5px;
+    line-height: 1.5;
+    padding: 2px 0 2px 12px;
+    position: relative;
+    color: #333;
+  }
+  .why-col.without ul li::before { content: "✗"; position: absolute; left: 0; color: #b00; font-size: 9px; top: 3px; }
+  .why-col.with    ul li::before { content: "✓"; position: absolute; left: 0; color: #1a3f6f; font-size: 9px; top: 3px; }
+
+  /* ── Icon helpers ── */
+  .layer-name i   { display: block; font-size: 15px; margin-bottom: 4px; opacity: 0.85; }
+  .section-title i { margin-right: 7px; opacity: 0.9; }
+  .abdm-core-box i { font-size: 18px; margin-bottom: 6px; display: block; opacity: 0.85; }
+  .wc-title i { margin-right: 5px; }
+  .startup .sname i { margin-right: 4px; color: #e08000; }
+  .gw-box i { margin-right: 4px; }
+  .sl-item .sn i { margin-right: 3px; color: #e08000; font-size: 10px; }
+</style>
+</head>
+<body>
+
+<h1><i class="fa-solid fa-network-wired" style="color:#1a3f6f;margin-right:8px;"></i>ABDM Reference Architectures — MNCH Settings</h1>
+<p class="page-subtitle">Three deployment contexts · ABDM Platform (ABHA + HIE-CM core) · Five AI startups (Kalpa Impact) mapped to their ABDM interface points</p>
+
+
+<!-- ═══════════════════════════════════════════════════
+     SETTING A
+═══════════════════════════════════════════════════ -->
+<div class="section-title"><i class="fa-solid fa-brain"></i>Setting A — AI-Enabled Coordinated MNCH Care</div>
+<div class="section-context">Reliable connectivity · Cloud AI · Public/district hospital · Skilled birth attendant present</div>
+
+<!-- 1. CAPTURE -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-microchip"></i>1. Capture</div>
+  <div class="layer-boxes">
+    <div class="box">Fetal Doppler / CareNX (BLE)</div>
+    <div class="box">BP / Hb / Urine-protein</div>
+    <div class="box">Ultrasound (DICOM)</div>
+    <div class="box">Janitri / DotoCare / Sybil / FetalLite (AI CTG)</div>
+    <div class="box">Dozee (contactless vitals)</div>
+    <div class="box">Gradi + Stryker–Titan (PPH)</div>
+    <div class="box">NICU monitors · Vayu CPAP · BabyFlow 100</div>
+    <div class="startup">
+      <span class="sname">★ Shishu Maapan</span><br>
+      <span class="srole">AI smartphone anthropometry at OPD / NICU</span>
+    </div>
+    <div class="startup">
+      <span class="sname">★ InAccel Saans</span><br>
+      <span class="srole">NICU respiratory AI + CPAP titration (alongside Vayu + BabyFlow 100)</span>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- 2. EDGE -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-server"></i>2. Edge &amp; Digitisation</div>
+  <div class="layer-boxes">
+    <div class="box">Device gateway (BLE → MQTT)</div>
+    <div class="box">HMIS / EMR (ANC + PNC context)</div>
+    <div class="box">FHIR Observation mapping (LOINC)</div>
+    <div class="startup">
+      <span class="sname">★ Khushi Baby</span><br>
+      <span class="srole">NFC community health passport; offline ANC / immunization / nutrition capture</span>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- 3. CLINICAL & AI -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-brain"></i>3. Clinical &amp; AI</div>
+  <div class="layer-boxes">
+    <div class="box">Pre-eclampsia risk model</div>
+    <div class="box">Growth-faltering model</div>
+    <div class="box">Human-in-loop sign-off</div>
+    <div class="box">FHIR DiagnosticReport + Care Plan</div>
+    <div class="startup">
+      <span class="sname">★ ARMMAN mMitra</span><br>
+      <span class="srole">Garbhini-GA2 gestational-age model; dropout-risk AI; output as FHIR DiagnosticReport</span>
+    </div>
+    <div class="startup">
+      <span class="sname">★ InAccel Saans</span><br>
+      <span class="srole">FPGA-accelerated respiratory AI → FHIR Observation → NICU care plan</span>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- WHY ABDM — Setting A -->
+<div class="why-abdm">
+  <div class="why-abdm-label">Why ABDM?</div>
+  <div class="why-abdm-body">
+    <div class="why-col without">
+      <div class="wc-title"><i class="fa-solid fa-circle-xmark"></i>Without ABDM</div>
+      <ul>
+        <li>Each startup (CareNX, ARMMAN, InAccel Saans) holds its own siloed patient record — no shared identity to link them</li>
+        <li>AI risk scores (pre-eclampsia, growth-faltering) live inside individual apps; the referring OB specialist cannot see them</li>
+        <li>No standard consent mechanism — mother cannot grant a specialist access to her full ANC history in one action</li>
+        <li>Tele-consult bookings are fragmented across each platform's own channel</li>
+        <li>Maternity claims require separate submissions to each payer portal</li>
+      </ul>
+    </div>
+    <div class="why-col with">
+      <div class="wc-title"><i class="fa-solid fa-circle-check"></i>What ABDM enables here</div>
+      <ul>
+        <li><strong>ABHA</strong> provides a single identity that links every device reading, AI output and clinical note to the same mother and child — across all providers</li>
+        <li><strong>HIE-CM</strong> lets the mother share her full care record with an OB specialist in two clicks — the "coordinated" in coordinated care is only possible with this consent layer</li>
+        <li>ARMMAN's risk DiagnosticReport and InAccel Saans's NICU Observations become part of the permanent ABHA-linked record, not disposable app data</li>
+        <li>UHI standardises tele-consult booking so any OB-listed on HFR/HPR is discoverable</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 4. ABDM PLATFORM -->
+<div class="abdm-wrap">
+  <div class="abdm-label">4. ABDM Platform</div>
+  <div class="abdm-platform">
+    <div class="abdm-title"><i class="fa-solid fa-shield-halved" style="margin-right:6px;color:#1a3f6f;"></i>ABDM Platform — NHA Digital Public Infrastructure</div>
+    <div class="abdm-core">
+      <div class="abdm-core-box">
+        <div class="cname"><i class="fa-solid fa-id-card" style="margin-right:5px;"></i>ABHA / Child ABHA</div>
+        <div class="cdesc">14-digit unique health ID for mother &amp; newborn · Scan-and-Share at registration · Links records across providers &amp; programmes</div>
+      </div>
+      <div class="abdm-core-box">
+        <div class="cname"><i class="fa-solid fa-arrows-rotate" style="margin-right:5px;"></i>HIE-CM</div>
+        <div class="cdesc">Consent Manager + Health Information Exchange · Patient-controlled consent artefact · Encrypted FHIR bundle transfer HIP ↔ HIU</div>
+      </div>
+    </div>
+    <div class="abdm-gateways">
+      <span class="gw-label">Gateways:</span>
+      <span class="gw-box"><i class="fa-solid fa-video"></i>UHI (tele-consult)</span>
+      <span class="gw-box"><i class="fa-solid fa-file-invoice"></i>NHCX (maternity claims)</span>
+      <span class="gw-box"><i class="fa-solid fa-building-columns"></i>HFR / HPR</span>
+      <div class="startup" style="margin-left:auto;">
+        <span class="sname">★ EkaCare</span><br>
+        <span class="srole">ABDM-certified PHR app; AI/NLP smart reports; ABHA-linked records; patient accesses via HIE-CM consent</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- 5. ONWARD -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-arrow-right-arrow-left"></i>5. Onward &amp; Feedback</div>
+  <div class="layer-boxes">
+    <div class="box">Mother PHR ← risk alerts + recall</div>
+    <div class="box">ANM ← due-lists</div>
+    <div class="box">OB / Paeds ← longitudinal view</div>
+    <div class="box">RCH · U-WIN · Poshan Tracker</div>
+    <div class="startup">
+      <span class="sname">★ ARMMAN mMitra</span><br>
+      <span class="srole">Automated IVR reminders to mother based on dropout-risk score</span>
+    </div>
+  </div>
+</div>
+
+<div class="startup-legend">
+  <div class="leg-title"><i class="fa-solid fa-star" style="color:#e08000;margin-right:5px;"></i>Startup ABDM Interfaces — Setting A</div>
+  <div class="sl-item">
+    <span class="sn">EkaCare</span> — PHR app; 1.3 cr AI/NLP smart reports<br>
+    <span class="si">↔ HIE-CM (consent), ABHA-linked records</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">Khushi Baby</span> — NFC health passport; offline ANC/immunization capture<br>
+    <span class="si">↔ ABHA / Child ABHA (sync), HIE-CM (record push)</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">ARMMAN mMitra</span> — Garbhini-GA2; IVR dropout-risk programme<br>
+    <span class="si">↔ FHIR DiagnosticReport via HIE-CM; mobile → ABHA</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">Shishu Maapan</span> — Smartphone AI anthropometry; WHO z-scores<br>
+    <span class="si">↔ Child ABHA (growth Observations), Poshan Tracker</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">InAccel Saans</span> — FPGA neonatal respiratory AI; CPAP titration<br>
+    <span class="si">↔ Child ABHA (NICU record), HIE-CM, NHCX claim trigger</span>
+  </div>
+</div>
+
+<hr class="divider">
+
+
+<!-- ═══════════════════════════════════════════════════
+     SETTING B
+═══════════════════════════════════════════════════ -->
+<div class="section-title"><i class="fa-solid fa-wifi" style="opacity:0.7;"></i>Setting B — Low-Resource / Intermittent-Connectivity MNCH</div>
+<div class="section-context">Rural &amp; tribal · Offline-first · ASHA / ANM / AWW as primary digital touchpoint · eSanjeevani hub-and-spoke</div>
+
+<!-- 1. CAPTURE -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-microchip"></i>1. Capture</div>
+  <div class="layer-boxes">
+    <div class="box">BP meter / Hb strip</div>
+    <div class="box">MUAC tape / weighing scale</div>
+    <div class="box">Paper MCP card</div>
+    <div class="startup">
+      <span class="sname">★ Shishu Maapan</span><br>
+      <span class="srole">Offline AI anthropometry on ASHA smartphone; no connectivity needed at capture</span>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- 2. ASSISTED DIGITISATION -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-mobile-screen"></i>2. Assisted Digitisation</div>
+  <div class="layer-boxes">
+    <div class="box">ASHA / ANM / AWW intake</div>
+    <div class="box">U-WIN offline (immunization)</div>
+    <div class="box">Poshan Tracker offline (anthropometry)</div>
+    <div class="box">Local encrypted cache (store &amp; forward)</div>
+    <div class="startup">
+      <span class="sname">★ Khushi Baby</span><br>
+      <span class="srole">NFC wristband → offline record; 1-tap visit entry; ABHA assist on reconnect</span>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- 3. CARE & TELE-CARE -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-video"></i>3. Care &amp; Tele-care</div>
+  <div class="layer-boxes">
+    <div class="box">eSanjeevani spoke (ANM/CHO)</div>
+    <div class="box">Hub OB / Paediatrician</div>
+    <div class="box">E-prescription + high-risk referral</div>
+    <div class="startup">
+      <span class="sname">★ ARMMAN / Kilkari</span><br>
+      <span class="srole">IVR voice messages on any phone; no data plan; ~3.2M active subscribers</span>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓ (deferred — queued records push on reconnect)</div>
+
+<!-- WHY ABDM — Setting B -->
+<div class="why-abdm">
+  <div class="why-abdm-label">Why ABDM?</div>
+  <div class="why-abdm-body">
+    <div class="why-col without">
+      <div class="wc-title"><i class="fa-solid fa-circle-xmark"></i>Without ABDM</div>
+      <ul>
+        <li>ASHA manually re-enters the same mother's data into three separate systems: RCH portal, U-WIN, and Poshan Tracker — every visit</li>
+        <li>When a mother is referred up to a district hospital, the receiving clinician has no record; she starts from scratch</li>
+        <li>Khushi Baby's NFC records and Shishu Maapan's growth data stay in separate apps with no shared patient ID to link them</li>
+        <li>No portable patient identity means community records are lost if the ASHA changes or the mother moves sub-centre</li>
+      </ul>
+    </div>
+    <div class="why-col with">
+      <div class="wc-title"><i class="fa-solid fa-circle-check"></i>What ABDM enables here</div>
+      <ul>
+        <li><strong>ABHA</strong> (offline mode, mobile number as key) gives the mother a portable ID — one capture automatically feeds RCH, U-WIN and Poshan Tracker on sync, eliminating triple entry</li>
+        <li><strong>HIE-CM</strong> (deferred) means the district-hospital clinician can pull her full community record the moment she arrives and connectivity is available</li>
+        <li>Child ABHA created at birth ensures the newborn's immunization record in U-WIN is linked from day one — no gap when the family leaves the facility</li>
+        <li>Khushi Baby and Shishu Maapan data become part of the same ABHA-linked record, not isolated app exports</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 4. ABDM PLATFORM -->
+<div class="abdm-wrap">
+  <div class="abdm-label">4. ABDM Platform<br><span style="font-weight:normal;font-size:9px;">(offline → sync)</span></div>
+  <div class="abdm-platform">
+    <div class="abdm-title"><i class="fa-solid fa-shield-halved" style="margin-right:6px;color:#1a3f6f;"></i>ABDM Platform — NHA Digital Public Infrastructure</div>
+    <div class="abdm-core">
+      <div class="abdm-core-box">
+        <div class="cname"><i class="fa-solid fa-id-card" style="margin-right:5px;"></i>ABHA / Child ABHA</div>
+        <div class="cdesc">Offline ABHA modes · Mobile number as practical key · Assisted ABHA at ANC / birth · Idempotent sync on reconnect</div>
+      </div>
+      <div class="abdm-core-box">
+        <div class="cname"><i class="fa-solid fa-arrows-rotate" style="margin-right:5px;"></i>HIE-CM</div>
+        <div class="cdesc">Consent recorded offline then synced · Deferred FHIR push · Conflict-safe; prevents duplicate records on multi-attempt sync</div>
+      </div>
+    </div>
+    <div class="abdm-gateways">
+      <span class="gw-label">Gateways:</span>
+      <span class="gw-box"><i class="fa-solid fa-video"></i>UHI (tele-consult)</span>
+      <span class="gw-box inactive">NHCX (limited)</span>
+      <span class="gw-box inactive">HFR / HPR</span>
+      <div class="startup" style="margin-left:auto;">
+        <span class="sname">★ EkaCare</span><br>
+        <span class="srole">PHR syncs when back online; ABHA-linked records accessible to referred specialist</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- 5. STATE SYSTEMS -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-arrow-right-arrow-left"></i>5. State Systems &amp; Feedback</div>
+  <div class="layer-boxes">
+    <div class="box">Single entry → RCH Portal (ANC/PNC)</div>
+    <div class="box">U-WIN (immunization due-lists)</div>
+    <div class="box">Poshan Tracker (growth status)</div>
+    <div class="box">SMS reminders → mother</div>
+    <div class="startup">
+      <span class="sname">★ ARMMAN mMitra</span><br>
+      <span class="srole">Dropout-risk scores surface high-risk mothers to ANM dashboard; IVR call auto-scheduled</span>
+    </div>
+  </div>
+</div>
+
+<div class="startup-legend">
+  <div class="leg-title"><i class="fa-solid fa-star" style="color:#e08000;margin-right:5px;"></i>Startup ABDM Interfaces — Setting B</div>
+  <div class="sl-item">
+    <span class="sn">Shishu Maapan</span> — Offline anthropometry at AWC / home visit<br>
+    <span class="si">↔ Child ABHA (cache → sync), Poshan Tracker</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">Khushi Baby</span> — NFC offline capture; zero data-entry home visits<br>
+    <span class="si">↔ ABHA / Child ABHA (deferred), U-WIN, RCH Portal</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">ARMMAN / Kilkari</span> — IVR on any phone; dropout-risk AI<br>
+    <span class="si">↔ ABHA via mobile-number; output → ANM due-lists</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">EkaCare</span> — PHR for referred mothers; smart reports on sync<br>
+    <span class="si">↔ HIE-CM (consent on sync), ABHA record access</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">InAccel Saans</span> — Applicable at FRU/SNCU with stable power<br>
+    <span class="si">↔ Child ABHA (if NICU present); FHIR Observation stored locally, synced</span>
+  </div>
+</div>
+
+<hr class="divider">
+
+
+<!-- ═══════════════════════════════════════════════════
+     SETTING C
+═══════════════════════════════════════════════════ -->
+<div class="section-title"><i class="fa-solid fa-hospital"></i>Setting C — Private / PPP Maternity (NHCX + ABDM)</div>
+<div class="section-context">Private hospitals · PMJAY / insurance-funded · ABHA-linked records · NHCX single-window claims · Digital Health Incentive Scheme</div>
+
+<!-- 1. CAPTURE -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-microchip"></i>1. Capture</div>
+  <div class="layer-boxes">
+    <div class="box">CTG / labour monitor</div>
+    <div class="box">Lab analysers (Hb, OGTT, ANC)</div>
+    <div class="box">Ultrasound / PACS (DICOM)</div>
+    <div class="box">NICU monitors (HR, SpO₂, Temp, RR)</div>
+    <div class="box">FetalLite (portable fetal monitor)</div>
+    <div class="box">Stryker–Titan (PPH surgical)</div>
+    <div class="box">Vayu CPAP</div>
+    <div class="box">BabyFlow 100 (Draeger/Syrma Johari)</div>
+    <div class="startup">
+      <span class="sname">★ InAccel Saans</span><br>
+      <span class="srole">NICU respiratory AI + CPAP titration — part of Gates-supported CPAP ecosystem (with Vayu + BabyFlow 100)</span>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- 2. MATERNITY HMIS -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-database"></i>2. Maternity HMIS / EMR (HIP)</div>
+  <div class="layer-boxes">
+    <div class="box">HIP + HIU role</div>
+    <div class="box">FHIR bundle builder (ANC / discharge / birth summary)</div>
+    <div class="box">ABHA Scan-and-Share (mother + newborn)</div>
+    <div class="box">Child ABHA at birth registration</div>
+    <div class="startup">
+      <span class="sname">★ EkaCare / Eka Doc</span><br>
+      <span class="srole">Front-desk triage; AI/NLP discharge summaries; ABHA-linked record creation; ~1.3 cr smart reports</span>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- 3. VALUE-ADD -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-gears"></i>3. Value-Add Services</div>
+  <div class="layer-boxes">
+    <div class="box">Mother–child care coordination</div>
+    <div class="box">Claims-readiness check (coding + validation)</div>
+    <div class="box">Discharge &amp; birth summary (FHIR document)</div>
+    <div class="startup">
+      <span class="sname">★ InAccel Saans</span><br>
+      <span class="srole">NICU clinical decision support → adds FHIR Observations to birth summary; supports PMJAY NICU package coding</span>
+    </div>
+    <div class="startup">
+      <span class="sname">★ Shishu Maapan</span><br>
+      <span class="srole">Pre-discharge newborn growth assessment; AI anthropometry feeds FHIR record and PMJAY claim line-item</span>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- WHY ABDM — Setting C -->
+<div class="why-abdm">
+  <div class="why-abdm-label">Why ABDM?</div>
+  <div class="why-abdm-body">
+    <div class="why-col without">
+      <div class="wc-title"><i class="fa-solid fa-circle-xmark"></i>Without ABDM</div>
+      <ul>
+        <li>Hospital submits maternity pre-auth separately to each insurer/TPA portal — different formats, 4–7 day turnaround per payer</li>
+        <li>At discharge, there is no standard handoff: the newborn's immunization record does not automatically reach the community ASHA or U-WIN</li>
+        <li>Mother has no visibility into claim status; relies on hospital billing staff for updates</li>
+        <li>InAccel Saans NICU data and EkaCare discharge summary are generated by separate apps — no shared patient record to anchor them</li>
+        <li>Hospital cannot claim the Digital Health Incentive without ABHA-linked records</li>
+      </ul>
+    </div>
+    <div class="why-col with">
+      <div class="wc-title"><i class="fa-solid fa-circle-check"></i>What ABDM enables here</div>
+      <ul>
+        <li><strong>NHCX</strong> (via ABDM) replaces fragmented payer portals with a single FHIR window — one pre-auth request reaches all 50+ onboarded insurers and PMJAY SHA simultaneously</li>
+        <li><strong>HIE-CM</strong> lets the mother consent to share her InAccel Saans NICU record and EkaCare discharge summary with the insurer as claims evidence — reducing fraud documentation delays</li>
+        <li><strong>Child ABHA</strong> at birth registration automatically links the newborn's hospital record to U-WIN, closing the facility-to-community immunization gap that today causes dropout</li>
+        <li><strong>ABHA</strong> linkage at admission triggers the Digital Health Incentive — a direct financial reason for private hospitals to participate</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 4. ABDM PLATFORM -->
+<div class="abdm-wrap">
+  <div class="abdm-label">4. ABDM Platform</div>
+  <div class="abdm-platform">
+    <div class="abdm-title"><i class="fa-solid fa-shield-halved" style="margin-right:6px;color:#1a3f6f;"></i>ABDM Platform — NHA Digital Public Infrastructure</div>
+    <div class="abdm-core">
+      <div class="abdm-core-box">
+        <div class="cname"><i class="fa-solid fa-id-card" style="margin-right:5px;"></i>ABHA / Child ABHA</div>
+        <div class="cdesc">M1 milestone: ABHA verification · Scan-and-Share at admission · Child ABHA at birth · Digital Health Incentive on ABHA-linked discharge</div>
+      </div>
+      <div class="abdm-core-box">
+        <div class="cname"><i class="fa-solid fa-arrows-rotate" style="margin-right:5px;"></i>HIE-CM</div>
+        <div class="cdesc">Consent Manager brokers insurer ↔ hospital exchange · FHIR claims evidence bundle · DPDP Act 2023 compliant · One window vs. many payer portals</div>
+      </div>
+    </div>
+    <div class="abdm-gateways">
+      <span class="gw-label">Gateways:</span>
+      <span class="gw-box"><i class="fa-solid fa-file-invoice"></i>NHCX (pre-auth + claim)</span>
+      <span class="gw-box"><i class="fa-solid fa-video"></i>UHI (ANC / tele-consult)</span>
+      <span class="gw-box"><i class="fa-solid fa-building-columns"></i>HFR / HPR</span>
+      <div class="startup" style="margin-left:auto;">
+        <span class="sname">★ EkaCare</span><br>
+        <span class="srole">PHR delivers cashless pre-auth status and records to mother; AI record summary shared with insurer via HIE-CM consent</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="arrow">↓</div>
+
+<!-- 5. PAYERS & ONWARD -->
+<div class="layer">
+  <div class="layer-name"><i class="fa-solid fa-file-invoice-dollar"></i>5. Payers &amp; Onward</div>
+  <div class="layer-boxes">
+    <div class="box">Insurer / TPA auto-adjudication</div>
+    <div class="box">PMJAY SHA · JSY / JSSK</div>
+    <div class="box">Digital Health Incentive reconciliation</div>
+    <div class="box">RCH / U-WIN handoff (newborn immunization)</div>
+    <div class="startup">
+      <span class="sname">★ ARMMAN mMitra</span><br>
+      <span class="srole">Post-discharge postnatal IVR reminders; dropout-risk flags community follow-up</span>
+    </div>
+    <div class="startup">
+      <span class="sname">★ Khushi Baby</span><br>
+      <span class="srole">NFC child health passport issued at discharge; ASHA picks up immunization schedule via U-WIN</span>
+    </div>
+  </div>
+</div>
+
+<div class="startup-legend">
+  <div class="leg-title"><i class="fa-solid fa-star" style="color:#e08000;margin-right:5px;"></i>Startup ABDM Interfaces — Setting C</div>
+  <div class="sl-item">
+    <span class="sn">EkaCare / Eka Doc</span> — Front-desk triage; AI discharge summaries; PHR to mother<br>
+    <span class="si">↔ HIE-CM (consent + record exchange), ABHA, NHCX claim evidence</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">InAccel Saans</span> — NICU respiratory AI; FHIR Observations for claim evidence<br>
+    <span class="si">↔ Child ABHA (NICU record), NHCX (NICU package), HIE-CM (insurer access)</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">Khushi Baby</span> — NFC child passport issued at discharge<br>
+    <span class="si">↔ Child ABHA (continuity), U-WIN, RCH Portal</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">ARMMAN mMitra</span> — Post-discharge postnatal IVR programme<br>
+    <span class="si">↔ ABHA via mobile-number; output → ANM/ASHA dashboard</span>
+  </div>
+  <div class="sl-item">
+    <span class="sn">Shishu Maapan</span> — Pre-discharge newborn growth; PMJAY NICU claim<br>
+    <span class="si">↔ Child ABHA (Observation), NHCX claim, Poshan Tracker handoff</span>
+  </div>
+</div>
+
+<hr class="divider">
+
+
+<!-- ═══════════════════════════════════════════════════
+     CROSS-SETTING TABLE
+═══════════════════════════════════════════════════ -->
+<div class="section-title"><i class="fa-solid fa-table-cells"></i>Cross-Setting Startup × ABDM Interface Map</div>
+<div class="section-context">Where each startup connects into ABDM and which settings it is active in</div>
+
+<table class="summary">
+  <thead>
+    <tr>
+      <th>Startup</th>
+      <th>ABHA / Child ABHA</th>
+      <th>HIE-CM</th>
+      <th style="width:80px;">Active In</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>EkaCare</strong><br><span style="color:#555;font-size:10px;">ABDM PHR · AI/NLP smart reports</span></td>
+      <td>Reads/writes ABHA-linked records; 1.3 cr smart reports</td>
+      <td>Primary channel — consent-gated access; insurer TPA record sharing</td>
+      <td><span class="tag tag-a">A</span> <span class="tag tag-b">B</span> <span class="tag tag-c">C</span></td>
+    </tr>
+    <tr>
+      <td><strong>Shishu Maapan</strong><br><span style="color:#555;font-size:10px;">Smartphone AI anthropometry</span></td>
+      <td>Growth observations → Child ABHA; feeds Poshan Tracker via ABHA</td>
+      <td>FHIR Observation bundle pushed via HIP on connectivity</td>
+      <td><span class="tag tag-a">A</span> <span class="tag tag-b">B</span> <span class="tag tag-c">C</span></td>
+    </tr>
+    <tr>
+      <td><strong>ARMMAN mMitra</strong><br><span style="color:#555;font-size:10px;">IVR + AI dropout prediction</span></td>
+      <td>Mobile number → ABHA linkage; dropout-risk score to ANM dashboard</td>
+      <td>Risk DiagnosticReport via HIE-CM; consent for outreach data</td>
+      <td><span class="tag tag-a">A</span> <span class="tag tag-b">B</span> <span class="tag tag-c">C</span></td>
+    </tr>
+    <tr>
+      <td><strong>InAccel Saans</strong><br><span style="color:#555;font-size:10px;">AI neonatal respiratory (FPGA)</span></td>
+      <td>NICU events → Child ABHA as FHIR Observations</td>
+      <td>Insurer/TPA access to NICU record via HIE-CM; NHCX claim evidence</td>
+      <td><span class="tag tag-a">A</span> <span class="tag tag-b">B*</span> <span class="tag tag-c">C</span></td>
+    </tr>
+    <tr>
+      <td><strong>Khushi Baby</strong><br><span style="color:#555;font-size:10px;">NFC community health passport</span></td>
+      <td>NFC tap links records to ABHA / Child ABHA on sync</td>
+      <td>FHIR bundle deferred push; immunization records → U-WIN via HIE-CM</td>
+      <td><span class="tag tag-a">A</span> <span class="tag tag-b">B</span> <span class="tag tag-c">C</span></td>
+    </tr>
+  </tbody>
+</table>
+<p style="font-size:9px;color:#888;margin-top:6px;">* InAccel Saans applicable in Setting B only at First Referral Units (FRU / SNCU) with stable power.</p>
+
+<p style="font-size:9px;color:#999;margin-top:28px;border-top:1px solid #ddd;padding-top:8px;">
+  Kalpa Impact · Gates Healthcare · ABDM Reference Architectures · June 2026<br>
+  Sources: ABDM FHIR IG v6.5, NHA HIP/HIU Guidelines (Oct 2022), UNDP U-WIN, Digital India Poshan Tracker, NITI Frontier Tech, PIB Feb 2026, IJRASET 2026
+</p>
+
+</body>
+</html>
